@@ -1,12 +1,15 @@
 package SSVG.TPFinalDeliveryMascotero.Model.Pedido;
 
 import SSVG.TPFinalDeliveryMascotero.Model.Cliente.ClienteEntity;
-import SSVG.TPFinalDeliveryMascotero.Model.Direccion.Direccion;
+import SSVG.TPFinalDeliveryMascotero.Model.DetallePedido.DetallePedidoEntity;
+import SSVG.TPFinalDeliveryMascotero.Model.Direccion.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
+import SSVG.TPFinalDeliveryMascotero.Model.Pago.PagoEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "Pedidos")
@@ -16,6 +19,8 @@ public class PedidoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "cliente_id", nullable = false)
     private ClienteEntity cliente;
 
     @Column(nullable = false)
@@ -28,6 +33,14 @@ public class PedidoEntity {
     @Column(nullable = false)
     private Double montoTotal;
 
-    @Embedded
-    private Direccion direccion;
+    @OneToOne
+    @JoinColumn(name = "direccion_id")
+    private DireccionEntity direccion;
+
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DetallePedidoEntity> productos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL)
+    private List<PagoEntity> pagos = new ArrayList<>();
+
 }

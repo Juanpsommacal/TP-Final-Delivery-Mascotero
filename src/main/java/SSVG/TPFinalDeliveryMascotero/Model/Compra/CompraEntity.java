@@ -1,11 +1,12 @@
 package SSVG.TPFinalDeliveryMascotero.Model.Compra;
 
-import SSVG.TPFinalDeliveryMascotero.Model.CompraProducto.CompraProductoEntity;
+import SSVG.TPFinalDeliveryMascotero.Model.DetalleCompra.DetalleCompraEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import SSVG.TPFinalDeliveryMascotero.Model.Proveedor.ProveedorEntity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -16,6 +17,8 @@ public class CompraEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "proveedor_id", nullable = false)
     private ProveedorEntity proveedor;
 
     @Column(nullable = false)
@@ -28,5 +31,8 @@ public class CompraEntity {
     @Column(nullable = false)
     private Double montoTotal;
 
-    private List<CompraProductoEntity> productos;
+    //CascadeType.All = Lo que se haga con compraEntity tambien se hace en DetalleCompraEntity
+    //OrphanRemoval true = Si saco un DetalleCompra de la lista de la compra se borra de la BDD
+    @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DetalleCompraEntity> productos = new ArrayList<>();
 }

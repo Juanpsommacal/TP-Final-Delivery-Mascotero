@@ -1,20 +1,25 @@
-package SSVG.TPFinalDeliveryMascotero.Model.CompraProducto;
+package SSVG.TPFinalDeliveryMascotero.Model.DetalleCompra;
 
 import SSVG.TPFinalDeliveryMascotero.Model.Compra.CompraEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "Compra_Producto")
-public class CompraProductoEntity {
+@Table(name = "Detalle_Compra")
+public class DetalleCompraEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @MapsId("compraId")
+    @JoinColumn(name = "compra_id")
     private CompraEntity compra;
 
+    @ManyToOne
+    @MapsId("productoId")
+    @JoinColumn(name = "producto_id")
     private ProductoEntity producto;
 
     @Column(nullable = false)
