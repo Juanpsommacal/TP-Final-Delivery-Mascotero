@@ -2,7 +2,15 @@ package SSVG.TPFinalDeliveryMascotero.Model;
 
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "Detalle_Compra")
 public class DetalleCompraEntity {

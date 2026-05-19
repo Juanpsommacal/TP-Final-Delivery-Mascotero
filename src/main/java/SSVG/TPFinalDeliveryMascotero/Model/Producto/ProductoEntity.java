@@ -13,7 +13,7 @@ import java.util.List;
 @Table(name = "Productos")
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "tipo_producto")
-public class ProductoEntity {
+public abstract class ProductoEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
