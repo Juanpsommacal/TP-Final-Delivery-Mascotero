@@ -4,6 +4,8 @@ import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAnimal;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAntipulgas;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Setter
 public class AntipulgasResponseDTO {
 
@@ -17,7 +19,7 @@ public class AntipulgasResponseDTO {
 
     private String descripcion;
 
-    private Double precio;
+    private BigDecimal precio;
 
     private Integer stock;
 

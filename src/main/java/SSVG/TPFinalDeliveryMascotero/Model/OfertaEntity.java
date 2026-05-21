@@ -28,7 +28,7 @@ public class OfertaEntity {
     private String descripcion;
 
     @Column(nullable = false)
-    private Integer porcentaje;
+    private Double porcentaje;
 
     @Column(nullable = false)
     private LocalDate fechaInicio;

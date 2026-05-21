@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ public class CompraEntity {
     private EstadoPedido estado;
 
     @Column(nullable = false)
-    private Double montoTotal;
+    private BigDecimal montoTotal;
 
     //CascadeType.All = Lo que se haga con compraEntity tambien se hace en DetalleCompraEntity
     //OrphanRemoval true = Si saco un DetalleCompra de la lista de la compra se borra de la BDD

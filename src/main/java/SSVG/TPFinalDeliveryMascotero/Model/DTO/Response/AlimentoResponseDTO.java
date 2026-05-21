@@ -5,6 +5,8 @@ import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAnimal;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.UnidadMedida;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Setter
 public class AlimentoResponseDTO {
 
@@ -18,7 +20,7 @@ public class AlimentoResponseDTO {
 
     private String descripcion;
 
-    private Double precio;
+    private BigDecimal precio;
 
     private Integer stock;
 

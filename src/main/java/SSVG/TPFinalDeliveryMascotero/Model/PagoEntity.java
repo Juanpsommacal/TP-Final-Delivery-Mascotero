@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -26,7 +27,7 @@ public class PagoEntity {
     private LocalDate fecha;
 
     @Column(nullable = false)
-    private Double monto;
+    private BigDecimal monto;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -35,9 +36,6 @@ public class PagoEntity {
     @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)
     private PedidoEntity pedido;
-
-    @Column(nullable = false)
-    private EstadoPago estado;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)

@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Model;
 
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +34,13 @@ public class PedidoEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EstadoPedido estado;
+    private EstadoPedido estadoPedido;
 
     @Column(nullable = false)
-    private Double montoTotal;
+    private BigDecimal montoTotal;
+
+    @Column(nullable = false)
+    private EstadoPago estadoPago;
 
     @OneToOne
     @JoinColumn(name = "direccion_id")
