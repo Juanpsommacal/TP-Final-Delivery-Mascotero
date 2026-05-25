@@ -14,4 +14,6 @@ public class PagoResponseDTO {
 
     private String metodoPago;
 
+
+
 }

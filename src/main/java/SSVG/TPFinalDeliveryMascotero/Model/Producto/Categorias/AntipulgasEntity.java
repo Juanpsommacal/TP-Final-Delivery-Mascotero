@@ -11,9 +11,6 @@ import jakarta.persistence.*;
 @DiscriminatorValue("ANTIPULGAS")
 public class AntipulgasEntity extends ProductoEntity {
 
-    @Id
-    private Long productoId;
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TipoAnimal tipoAnimal;

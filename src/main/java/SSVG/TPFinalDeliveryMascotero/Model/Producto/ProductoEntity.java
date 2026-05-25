@@ -5,12 +5,17 @@ import SSVG.TPFinalDeliveryMascotero.Model.DetallePedidoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.OfertaEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.ProveedorEntity;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "Productos")
+@Table(name = "productos")
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "tipo_producto")
 public abstract class ProductoEntity {
@@ -25,7 +30,7 @@ public abstract class ProductoEntity {
     private String descripcion;
 
     @Column(nullable = false)
-    private Double precio;
+    private BigDecimal precio;
 
     @Column(nullable = false)
     private Integer stock;

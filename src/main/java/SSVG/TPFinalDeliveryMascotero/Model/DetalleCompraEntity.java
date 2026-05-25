@@ -22,13 +22,11 @@ public class DetalleCompraEntity {
     private Long id;
 
     @ManyToOne
-    @MapsId("compraId")
-    @JoinColumn(name = "compra_id")
+    @JoinColumn(name = "compra_id", nullable = false)
     private CompraEntity compra;
 
     @ManyToOne
-    @MapsId("productoId")
-    @JoinColumn(name = "producto_id")
+    @JoinColumn(name = "producto_id", nullable = false)
     private ProductoEntity producto;
 
     @Column(nullable = false)

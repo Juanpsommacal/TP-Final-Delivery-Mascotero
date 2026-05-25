@@ -5,15 +5,20 @@ import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAnimal;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.UnidadMedida;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "alimentos")
 @PrimaryKeyJoinColumn(name = "producto_id")
 @DiscriminatorValue("ALIMENTO")
 public class AlimentoEntity extends ProductoEntity {
-
-    @Id
-    private Long productoId;
 
     @Column(nullable = false)
     private Double peso;
