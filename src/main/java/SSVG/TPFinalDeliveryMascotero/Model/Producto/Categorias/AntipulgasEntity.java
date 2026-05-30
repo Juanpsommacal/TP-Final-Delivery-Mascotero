@@ -4,7 +4,15 @@ import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAnimal;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAntipulgas;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Table(name = "antipulgas")
 @PrimaryKeyJoinColumn(name = "producto_id")

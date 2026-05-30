@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 @Setter
 public class AlimentoResponseDTO {
 
+    private Long id;
+
     private String marca;
 
     private String nombre;

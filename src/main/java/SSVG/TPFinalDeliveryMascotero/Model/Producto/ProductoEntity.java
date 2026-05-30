@@ -38,6 +38,9 @@ public abstract class ProductoEntity {
     @Column(nullable = false)
     private String marca;
 
+    @Column(nullable = false)
+    private Boolean activo = true;
+
     @ManyToOne
     @JoinColumn(name = "oferta_id", nullable = true)
     private OfertaEntity oferta;

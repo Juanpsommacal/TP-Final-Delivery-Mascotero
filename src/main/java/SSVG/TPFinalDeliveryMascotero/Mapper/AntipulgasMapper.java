@@ -1,0 +1,14 @@
+package SSVG.TPFinalDeliveryMascotero.Mapper;
+
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.AntipulgasCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.AntipulgasResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AntipulgasEntity;
+import org.mapstruct.Mapper;
+
+@Mapper(componentModel = "spring")
+public interface AntipulgasMapper {
+
+    public AntipulgasEntity toEntity(AntipulgasCreateRequestDTO request);
+
+    public AntipulgasResponseDTO toResponse(AntipulgasEntity entity);
+}
