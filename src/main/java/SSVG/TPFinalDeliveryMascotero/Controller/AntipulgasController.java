@@ -5,6 +5,7 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.AntipulgasResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.AntipulgasService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.stylesheets.LinkStyle;
@@ -21,7 +22,7 @@ public class AntipulgasController {
     @PostMapping
     public ResponseEntity<AntipulgasResponseDTO> createAntipulgas(@Valid @RequestBody AntipulgasCreateRequestDTO request){
         AntipulgasResponseDTO response = service.createAntipulgas(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping

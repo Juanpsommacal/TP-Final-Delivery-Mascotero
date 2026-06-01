@@ -6,6 +6,7 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.DireccionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +21,8 @@ public class DireccionController {
 
     @PostMapping
     public ResponseEntity<DireccionResponseDTO> createDireccion(@Valid @RequestBody DireccionCreateRequestDTO request){
-        return ResponseEntity.ok(service.createDireccion(request));
+        DireccionResponseDTO response = service.createDireccion(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
