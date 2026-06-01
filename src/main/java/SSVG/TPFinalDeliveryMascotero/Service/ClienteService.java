@@ -1,6 +1,8 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
+import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyAssociatedException;
+import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ClienteMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
@@ -21,7 +23,7 @@ import java.util.Optional;
 public class ClienteService {
 
     private final ClienteRepository repository;
-    private final DireccionRepository direccionRepository;
+    private final DireccionService direccionService;
     private final ClienteMapper mapper;
 
     public ClienteResponseDTO createCliente(ClienteCreateRequestDTO request){
@@ -70,18 +72,17 @@ public class ClienteService {
     }
 
     // Asociar una direccion a un Cliente
-    public ClienteResponseDTO asociarDireccion(Long clienteId, Long direccionId) {
+    public ClienteResponseDTO associateDireccion(Long clienteId, Long direccionId) {
         ClienteEntity cliente = getEntityById(clienteId);
 
-        DireccionEntity direccion = direccionRepository.findById(direccionId)
-                .orElseThrow(()-> new ResourceNotFoundException("El direccion no existe"));
+        DireccionEntity direccion = direccionService.getEntityById(direccionId);
 
         // "anyMatch" devuelve un boolean, y sirve para saber si en la lista de direcciones ya existe una con ese ID
         boolean direccionAsociada = cliente.getDirecciones().stream()
                 .anyMatch(d -> d.getId().equals(direccionId));
 
         if (direccionAsociada) {
-            throw new IllegalArgumentException("La direccion ya esta asociada al cliente");
+            throw new ResourceAlreadyAssociatedException("La direccion ya esta asociada al cliente");
         }
 
         cliente.getDirecciones().add(direccion);
@@ -90,17 +91,16 @@ public class ClienteService {
     }
 
     // Desvincular la direccion de un cliente por ID
-    public ClienteResponseDTO desvincularDireccion(Long clienteId, Long direccionId) {
+    public ClienteResponseDTO dissociateDireccion(Long clienteId, Long direccionId) {
         ClienteEntity cliente = getEntityById(clienteId);
 
-        direccionRepository.findById(direccionId)
-                .orElseThrow(() -> new ResourceNotFoundException("La direccion no existe"));
+        direccionService.getEntityById(direccionId);
 
         boolean direccionAsociada = cliente.getDirecciones().stream()
                 .anyMatch(d -> d.getId().equals(direccionId));
 
         if (!direccionAsociada) {
-            throw new IllegalArgumentException("La direccion no esta asociada al cliente");
+            throw new ResourceNotAssociatedException("La direccion no esta asociada al cliente");
         }
 
         //Recorre las direcciones del cliente y elimina solo si se encuentra el mismo ID que "direccionId"
