@@ -7,7 +7,9 @@ import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.ClienteRepository;
+import SSVG.TPFinalDeliveryMascotero.Repository.DireccionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ import java.util.Optional;
 public class ClienteService {
 
     private final ClienteRepository repository;
+    private final DireccionRepository direccionRepository;
     private final ClienteMapper mapper;
 
     public ClienteResponseDTO createCliente(ClienteCreateRequestDTO request){
@@ -66,6 +69,45 @@ public class ClienteService {
         return mapper.toResponse(repository.save(entity));
     }
 
+    // Asociar una direccion a un Cliente
+    public ClienteResponseDTO asociarDireccion(Long clienteId, Long direccionId) {
+        ClienteEntity cliente = getEntityById(clienteId);
+
+        DireccionEntity direccion = direccionRepository.findById(direccionId)
+                .orElseThrow(()-> new ResourceNotFoundException("El direccion no existe"));
+
+        // "anyMatch" devuelve un boolean, y sirve para saber si en la lista de direcciones ya existe una con ese ID
+        boolean direccionAsociada = cliente.getDirecciones().stream()
+                .anyMatch(d -> d.getId().equals(direccionId));
+
+        if (direccionAsociada) {
+            throw new IllegalArgumentException("La direccion ya esta asociada al cliente");
+        }
+
+        cliente.getDirecciones().add(direccion);
+
+        return mapper.toResponse(repository.save(cliente));
+    }
+
+    // Desvincular la direccion de un cliente por ID
+    public ClienteResponseDTO desvincularDireccion(Long clienteId, Long direccionId) {
+        ClienteEntity cliente = getEntityById(clienteId);
+
+        direccionRepository.findById(direccionId)
+                .orElseThrow(() -> new ResourceNotFoundException("La direccion no existe"));
+
+        boolean direccionAsociada = cliente.getDirecciones().stream()
+                .anyMatch(d -> d.getId().equals(direccionId));
+
+        if (!direccionAsociada) {
+            throw new IllegalArgumentException("La direccion no esta asociada al cliente");
+        }
+
+        //Recorre las direcciones del cliente y elimina solo si se encuentra el mismo ID que "direccionId"
+        cliente.getDirecciones().removeIf(d -> d.getId().equals(direccionId));
+
+        return mapper.toResponse(repository.save(cliente));
+    }
 
     ///----- Validations -----
 

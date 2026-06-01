@@ -14,6 +14,8 @@ import java.util.List;
 @Setter
 public class ClienteResponseDTO {
 
+    private Long id;
+
     private String nombre;
 
     private String apellido;
