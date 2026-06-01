@@ -40,4 +40,16 @@ public class ClienteController {
         return ResponseEntity.ok(service.updateCliente(request, id));
     }
 
+    @PatchMapping("/{clienteId}/direcciones/{direccionId}")
+    public ResponseEntity<ClienteResponseDTO> associateDireccion(@PathVariable Long clienteId,
+                                                               @PathVariable Long direccionId) {
+        return ResponseEntity.ok(service.associateDireccion(clienteId, direccionId));
+    }
+
+    @DeleteMapping("/{clienteId}/direcciones/{direccionId}")
+    public ResponseEntity<ClienteResponseDTO> dissociateDireccion(@PathVariable Long clienteId,
+                                                                   @PathVariable Long direccionId) {
+        return ResponseEntity.ok(service.dissociateDireccion(clienteId, direccionId));
+    }
+
 }

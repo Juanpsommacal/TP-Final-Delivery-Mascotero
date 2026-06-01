@@ -5,7 +5,7 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteCreateRequ
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = DireccionMapper.class)
 public interface ClienteMapper {
 
     public ClienteEntity toEntity(ClienteCreateRequestDTO request);
