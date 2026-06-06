@@ -9,4 +9,6 @@ import org.springframework.stereotype.Service;
 public class DetalleCompraService {
 
     private final DetalleCompraRepository repository;
+
+
 }

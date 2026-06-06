@@ -14,12 +14,10 @@ public interface DetalleCompraMapper {
             target = "precioTotal",
             expression = "java(calcularPrecioTotal(entity))"
     )
+    @Mapping(target = "nombreProducto", source = "producto.nombre")
+    @Mapping(target = "idProducto", source = "producto.id")
     public DetalleCompraResponseDTO toResponse (DetalleCompraEntity entity);
 
-    /*Dudoso si tener esto aca o no. Segun lo que investigue si es algo sencillo puede ir en el mapper
-    Pero si se complejiza, como por ejemplo si agregamos un subtotal y descuentos, IVA, etc.
-    Habria que ponerlo en el service
-    */
     default BigDecimal calcularPrecioTotal(DetalleCompraEntity entity) {
         return entity.getPrecioUnitario().multiply(BigDecimal.valueOf(entity.getCantidad()));
     }

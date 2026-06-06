@@ -1,14 +1,17 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
+import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.AlimentoMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.AntipulgasMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ProductoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ProductoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,13 @@ public class ProductoService {
         return repository.findAll().stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    public ProductoEntity getEntityById(Long id){
+        Optional<ProductoEntity> producto = repository.findById(id);
+        if (producto.isPresent())
+            return producto.get();
+        else throw new ResourceNotFoundException("El producto no existe");
     }
 
 }
