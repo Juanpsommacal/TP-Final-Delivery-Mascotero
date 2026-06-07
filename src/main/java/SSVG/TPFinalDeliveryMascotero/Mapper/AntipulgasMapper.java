@@ -1,6 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Mapper;
 
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.AntipulgasCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Antipulgas.AntipulgasCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.AntipulgasResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AntipulgasEntity;
 import org.mapstruct.Mapper;
