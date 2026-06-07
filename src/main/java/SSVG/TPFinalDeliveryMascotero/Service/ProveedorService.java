@@ -1,8 +1,12 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
+import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
+import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
+import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyExistsException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ProveedorMapper;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.ProveedorCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor.ProveedorCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor.ProveedorUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ProveedorResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.ProveedorEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.ProveedorRepository;
@@ -41,4 +45,41 @@ public class ProveedorService {
                 .toList();
     }
 
+    public ProveedorResponseDTO updateProveedor(ProveedorUpdateRequestDTO request, Long id){
+        ProveedorEntity proveedor = getEntityById(id);
+
+        if (request.getNombre() != null){
+            if (request.getNombre().trim().isEmpty()){
+                throw new EmptyUpdateFieldException("El nombre del Proveedor no puede estar vacio");
+            }
+            if (!request.getNombre().equalsIgnoreCase(proveedor.getNombre()) && repository.existsByNombreIgnoreCase(request.getNombre())){
+                throw new ResourceAlreadyExistsException("Ya existe un proveedor con ese nombre");
+            }
+            proveedor.setNombre(request.getNombre());
+        }
+
+        if (request.getTelefono() != null) {
+            if (request.getTelefono().trim().isEmpty()) {
+                throw new EmptyUpdateFieldException("El telefono del proveedor no puede ser solo espacios en blanco");
+            }
+
+            if (!request.getTelefono().equals(proveedor.getTelefono()) && repository.existsByTelefono(request.getTelefono())) {
+                throw new ResourceAlreadyExistsException("Ya existe un proveedor con ese telefono");
+            }
+
+            proveedor.setTelefono(request.getTelefono());
+        }
+
+        return mapper.toResponse(repository.save(proveedor));
+    }
+
+    public void deleteProveedor(Long id){
+        ProveedorEntity entity = getEntityById(id);
+
+        if (entity.getActivo() == false){
+            throw new InactiveResourceException("El Proveedor ya fue eliminado");
+        }
+        entity.setActivo(false);
+        repository.save(entity);
+    }
 }
