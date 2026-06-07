@@ -22,11 +22,14 @@ public class ProveedorEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String nombre;
 
     @Column(nullable = false)
     private String telefono;
+
+    @Column(nullable = false)
+    private Boolean activo = true;
 
     @OneToMany(mappedBy = "proveedor")
     private List<CompraEntity> compras = new ArrayList<>();

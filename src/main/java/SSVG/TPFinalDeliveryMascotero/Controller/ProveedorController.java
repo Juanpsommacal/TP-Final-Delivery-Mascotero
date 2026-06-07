@@ -1,7 +1,9 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.ProveedorCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor.ProveedorCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor.ProveedorUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ProveedorResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.ProveedorEntity;
 import SSVG.TPFinalDeliveryMascotero.Service.ProveedorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,13 +26,25 @@ public class ProveedorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @GetMapping
+    public ResponseEntity<List<ProveedorResponseDTO>> getAll(){
+        return ResponseEntity.ok(service.getAll());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ProveedorResponseDTO> getById(@PathVariable Long id){
         return ResponseEntity.ok(service.getDTOById(id));
     }
 
-    @GetMapping
-    public ResponseEntity<List<ProveedorResponseDTO>> getAll(){
-        return ResponseEntity.ok(service.getAll());
+    @PatchMapping("{id}")
+    public ResponseEntity<ProveedorResponseDTO> updateProveedor(@Valid @RequestBody ProveedorUpdateRequestDTO request, @PathVariable Long id){
+        return ResponseEntity.ok(service.updateProveedor(request, id));
+    }
+
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<ProveedorResponseDTO> deleteProveedor(@PathVariable Long id){
+        service.deleteProveedor(id);
+        return ResponseEntity.noContent().build();
     }
 }

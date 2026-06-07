@@ -1,6 +1,5 @@
-package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request;
+package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -12,13 +11,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProveedorCreateRequestDTO {
+public class ProveedorUpdateRequestDTO {
 
-
-    @NotBlank(message = "El nombre no puede estar vacio")
     private String nombre;
 
-    @NotBlank(message = "El telefono no puede estar vacio")
     @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "El número de teléfono no es válido")
     private String telefono;
+
 }
