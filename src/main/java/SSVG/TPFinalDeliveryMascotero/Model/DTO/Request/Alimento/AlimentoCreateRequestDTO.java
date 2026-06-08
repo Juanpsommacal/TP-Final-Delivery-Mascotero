@@ -1,4 +1,4 @@
-package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request;
+package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Alimento;
 
 
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EtapaVida;
