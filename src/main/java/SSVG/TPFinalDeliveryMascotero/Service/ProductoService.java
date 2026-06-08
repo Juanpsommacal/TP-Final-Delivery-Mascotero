@@ -34,7 +34,7 @@ public class ProductoService {
         else throw new ResourceNotFoundException("El producto no existe");
     }
 
-    // 🚀 NUEVO MÉTODO: asignar oferta a producto
+
     public ProductoResponseDTO asignarOferta(Long productoId, Long ofertaId) {
 
         ProductoEntity producto = repository.findById(productoId)

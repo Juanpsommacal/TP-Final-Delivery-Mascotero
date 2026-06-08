@@ -4,12 +4,12 @@ import SSVG.TPFinalDeliveryMascotero.Mapper.OfertaMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Compra.OfertaRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.OfertaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.OfertaEntity;
-
 import SSVG.TPFinalDeliveryMascotero.Repository.OfertaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -20,6 +20,8 @@ public class OfertaService {
     private final OfertaMapper mapper;
 
     public OfertaResponseDTO create(OfertaRequestDTO requestDTO) {
+
+        validarFechas(requestDTO.getFechaInicio(), requestDTO.getFechaFin());
 
         OfertaEntity oferta = mapper.toEntity(requestDTO);
 
@@ -50,6 +52,8 @@ public class OfertaService {
                 .orElseThrow(() ->
                         new EntityNotFoundException("Oferta no encontrada con id: " + id));
 
+        validarFechas(requestDTO.getFechaInicio(), requestDTO.getFechaFin());
+
         oferta.setNombre(requestDTO.getNombre());
         oferta.setDescripcion(requestDTO.getDescripcion());
         oferta.setPorcentaje(requestDTO.getPorcentaje());
@@ -70,4 +74,25 @@ public class OfertaService {
         repository.delete(oferta);
     }
 
+
+    private void validarFechas(LocalDate inicio, LocalDate fin) {
+
+        LocalDate hoy = LocalDate.now();
+
+        if (inicio == null || fin == null) {
+            throw new IllegalArgumentException("Las fechas no pueden ser nulas");
+        }
+
+        if (inicio.isBefore(hoy)) {
+            throw new IllegalArgumentException("La fecha de inicio no puede ser menor a la fecha actual");
+        }
+
+        if (fin.isBefore(hoy)) {
+            throw new IllegalArgumentException("La fecha de fin no puede ser menor a la fecha actual");
+        }
+
+        if (fin.isBefore(inicio)) {
+            throw new IllegalArgumentException("La fecha de fin no puede ser menor a la fecha de inicio");
+        }
+    }
 }
