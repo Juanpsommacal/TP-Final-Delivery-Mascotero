@@ -18,6 +18,8 @@ public class ProductoResponseDTO {
 
     private BigDecimal precio;
 
+    private Double precioFinalConDesc;
+
     private Integer stock;
 
     private String marca;
