@@ -71,6 +71,9 @@ public class CompraService {
                     ProductoEntity producto =
                             productoService.getEntityById(requestDetalle.getProductoId());
 
+                    // Se le aumenta el Stock del Producto (stockActual + la cantidad ingresada)
+                    increaseProductStock(producto, requestDetalle.getCantidad());
+
                     //Creamos un detalleEntity y seteamos los atributos
                     DetalleCompraEntity newDetalle = new DetalleCompraEntity();
                     newDetalle.setCompra(savedCompra);
@@ -104,5 +107,16 @@ public class CompraService {
         return repository.findAll().stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    // Funciones Utiles
+
+    private void increaseProductStock(ProductoEntity producto, Integer cantidad){
+        Integer stockActual = producto.getStock();
+
+        if (stockActual == null){
+            stockActual = 0;
+        }
+        producto.setStock(stockActual + cantidad);
     }
 }
