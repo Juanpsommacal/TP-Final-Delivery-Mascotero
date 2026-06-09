@@ -1,4 +1,4 @@
-package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request;
+package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Antipulgas;
 
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAnimal;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAntipulgas;
