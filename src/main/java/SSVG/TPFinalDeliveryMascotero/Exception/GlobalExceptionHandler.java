@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -17,10 +19,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleMethodNotValidException(MethodArgumentNotValidException ex){
 
-        Map<String, String> errorsMap = new HashMap<>();
+        Map<String, List<String>> errorsMap = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error -> {
-            errorsMap.put(error.getField(), error.getDefaultMessage());
+            errorsMap.computeIfAbsent(error.getField(), key -> new ArrayList<>())
+                    .add(error.getDefaultMessage());
         });
 
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
