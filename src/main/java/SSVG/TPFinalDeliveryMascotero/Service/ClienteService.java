@@ -77,11 +77,7 @@ public class ClienteService {
 
         DireccionEntity direccion = direccionService.getEntityById(direccionId);
 
-        // "anyMatch" devuelve un boolean, y sirve para saber si en la lista de direcciones ya existe una con ese ID
-        boolean direccionAsociada = cliente.getDirecciones().stream()
-                .anyMatch(d -> d.getId().equals(direccionId));
-
-        if (direccionAsociada) {
+        if (isAssociated(cliente, direccionId)) {
             throw new ResourceAlreadyAssociatedException("La direccion ya esta asociada al cliente");
         }
 
@@ -96,10 +92,7 @@ public class ClienteService {
 
         direccionService.getEntityById(direccionId);
 
-        boolean direccionAsociada = cliente.getDirecciones().stream()
-                .anyMatch(d -> d.getId().equals(direccionId));
-
-        if (!direccionAsociada) {
+        if (!isAssociated(cliente, direccionId)) {
             throw new ResourceNotAssociatedException("La direccion no esta asociada al cliente");
         }
 
@@ -111,5 +104,10 @@ public class ClienteService {
 
     ///----- Validations -----
 
+    public boolean isAssociated(ClienteEntity cliente, Long direccionId){
+        // "anyMatch" devuelve un boolean, y sirve para saber si en la lista de direcciones ya existe una con ese ID
+        return cliente.getDirecciones().stream()
+                .anyMatch(d -> d.getId().equals(direccionId));
+    }
 
 }

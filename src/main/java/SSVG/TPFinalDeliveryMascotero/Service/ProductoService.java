@@ -34,4 +34,8 @@ public class ProductoService {
         else throw new ResourceNotFoundException("El producto no existe");
     }
 
+    public void saveEntity(ProductoEntity entity){
+        repository.save(entity);
+    }
+
 }

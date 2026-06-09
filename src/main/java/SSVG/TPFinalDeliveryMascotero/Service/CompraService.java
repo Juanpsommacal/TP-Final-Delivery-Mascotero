@@ -29,7 +29,6 @@ public class CompraService {
     private final CompraRepository repository;
     private final ProveedorService proveedorService;
     private final ProductoService productoService;
-    private final DetalleCompraRepository detalleRepository;
     private final CompraMapper mapper;
 
     @Transactional
@@ -38,10 +37,9 @@ public class CompraService {
         //Buscamos el proveedor
         ProveedorEntity proveedor = proveedorService.getEntityById(request.getProveedorId());
 
-        //Creamos la compra vacia para poder tener la ID
+        //Creamos la compra vacia y vamos seteando los atributos
         CompraEntity newCompra = new CompraEntity();
 
-        //Seteamos los campos de la compra
         newCompra.setProveedor(proveedor);
         newCompra.setFecha(LocalDate.now());
         newCompra.setEstado(EstadoPedido.PENDIENTE);
@@ -62,8 +60,8 @@ public class CompraService {
         //Y guardamos la compra asi nos da la ID
         CompraEntity savedCompra = repository.save(newCompra);
 
-        //Ahora creamos una lista de detalleEntity
-        List<DetalleCompraEntity> detalle = request.getDetalle()
+        //Ahora creamos una lista de detalleCompraEntity
+        List<DetalleCompraEntity> detalles = request.getDetalle()
                 .stream()
                 //Transformamos a producto
                 .map(requestDetalle -> {
@@ -74,7 +72,7 @@ public class CompraService {
                     // Se le aumenta el Stock del Producto (stockActual + la cantidad ingresada)
                     increaseProductStock(producto, requestDetalle.getCantidad());
 
-                    //Creamos un detalleEntity y seteamos los atributos
+                    //Creamos los detalleCompraEntity y seteamos los atributos
                     DetalleCompraEntity newDetalle = new DetalleCompraEntity();
                     newDetalle.setCompra(savedCompra);
                     newDetalle.setProducto(producto);
@@ -83,16 +81,16 @@ public class CompraService {
 
                     return newDetalle;
                 })
-                .collect(Collectors.toCollection(ArrayList::new));;
+                .collect(Collectors.toCollection(ArrayList::new));
 
         //Seteamos el detalle dentro de la compra
-        savedCompra.setProductos(detalle);
+        savedCompra.setProductos(detalles);
 
         //Guardamos en el repo y devolvemos el DTO de response.
         return mapper.toResponse(repository.save(savedCompra));
     }
 
-    public CompraEntity getEntityById(Long id) throws ResourceNotFoundException {
+    public CompraEntity getEntityById(Long id){
         Optional<CompraEntity> entity = repository.findById(id);
         if(entity.isPresent())
             return entity.get();

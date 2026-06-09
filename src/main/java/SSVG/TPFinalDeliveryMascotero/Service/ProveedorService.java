@@ -45,6 +45,8 @@ public class ProveedorService {
                 .toList();
     }
 
+    /// -------- Updates ----------
+
     public ProveedorResponseDTO updateProveedor(ProveedorUpdateRequestDTO request, Long id){
         ProveedorEntity proveedor = getEntityById(id);
 

@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 public class PedidoResponseDTO {
 
-    private String Cliente;
+    private String nombreCliente;
 
     private LocalDate fecha;
 
@@ -21,7 +21,7 @@ public class PedidoResponseDTO {
 
     private String estadoPago;
 
-    private String direccion;
+    private DireccionResponseDTO direccion;
 
     private List<DetallePedidoResponseDTO> detallePedido;
 
