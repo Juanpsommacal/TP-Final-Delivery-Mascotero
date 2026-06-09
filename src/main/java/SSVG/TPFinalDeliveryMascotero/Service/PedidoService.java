@@ -50,7 +50,6 @@ public class PedidoService {
 
         //Ahora verificamos si el stock que tenemos es suficiente para el pedido
         Map<String, String> errorsMap = new HashMap<>();
-        Map<String, String> inactiveMap = new HashMap<>();
         request.getDetalles()
                 .forEach(detalle -> {
 
@@ -81,6 +80,7 @@ public class PedidoService {
         newPedido.setFecha(LocalDate.now());
         newPedido.setEstadoPedido(EstadoPedido.PENDIENTE);
         newPedido.setEstadoPago(EstadoPago.PENDIENTE);
+        newPedido.setDireccion(direccion);
 
         //Calculamos el precio total del pedido
         BigDecimal montoTotal = request.getDetalles()
