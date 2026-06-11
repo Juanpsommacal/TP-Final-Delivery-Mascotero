@@ -1,10 +1,8 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
-import SSVG.TPFinalDeliveryMascotero.Mapper.AlimentoMapper;
-import SSVG.TPFinalDeliveryMascotero.Mapper.AntipulgasMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ProductoMapper;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ProductoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +30,10 @@ public class ProductoService {
         if (producto.isPresent())
             return producto.get();
         else throw new ResourceNotFoundException("El producto no existe");
+    }
+
+    public void saveEntity(ProductoEntity entity){
+        repository.save(entity);
     }
 
 }

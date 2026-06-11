@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.AlimentoCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Alimento.AlimentoCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Alimento.AlimentoUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.AlimentoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.AlimentoService;
 import jakarta.validation.Valid;
@@ -39,6 +40,12 @@ public class AlimentoController {
     public ResponseEntity<AlimentoResponseDTO> deleteById(@PathVariable Long id){
         service.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<AlimentoResponseDTO> updateAlimento(@Valid @RequestBody AlimentoUpdateRequestDTO request,
+                                                              @PathVariable Long id){
+        return ResponseEntity.ok(service.updateAlimento(request, id));
     }
 
 }

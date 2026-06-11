@@ -1,6 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Mapper;
 
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ProductoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AlimentoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AntipulgasEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;

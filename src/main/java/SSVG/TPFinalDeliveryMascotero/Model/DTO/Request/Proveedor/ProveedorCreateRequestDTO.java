@@ -1,6 +1,5 @@
-package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request;
+package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -13,7 +12,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProveedorCreateRequestDTO {
-
 
     @NotBlank(message = "El nombre no puede estar vacio")
     private String nombre;

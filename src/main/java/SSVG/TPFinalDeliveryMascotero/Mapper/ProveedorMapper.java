@@ -1,6 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Mapper;
 
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.ProveedorCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor.ProveedorCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ProveedorResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.ProveedorEntity;
 import org.mapstruct.Mapper;

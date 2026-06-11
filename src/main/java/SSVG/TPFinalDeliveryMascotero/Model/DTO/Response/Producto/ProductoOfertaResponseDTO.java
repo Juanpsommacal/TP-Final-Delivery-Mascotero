@@ -1,21 +1,18 @@
-package SSVG.TPFinalDeliveryMascotero.Model.DTO.Response;
+package SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProveedorResponseDTO {
+@Getter
+@Setter
+/// Response de Producto resumido, para mostralo dentro de una Oferta
+public class ProductoOfertaResponseDTO {
 
     private Long id;
 
     private String nombre;
-
-    private String telefono;
-
-    private Boolean activo;
 }
