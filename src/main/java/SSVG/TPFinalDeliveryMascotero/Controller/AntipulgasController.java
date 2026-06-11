@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.AntipulgasCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Antipulgas.AntipulgasCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Antipulgas.AntipulgasUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.AntipulgasResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.AntipulgasService;
 import jakarta.validation.Valid;
@@ -8,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.util.List;
 
@@ -33,6 +33,12 @@ public class AntipulgasController {
     @GetMapping("/{id}")
     public ResponseEntity<AntipulgasResponseDTO> getById(@PathVariable Long id){
         return ResponseEntity.ok(service.getDTOById(id));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<AntipulgasResponseDTO> updateAntipulgas(@Valid @RequestBody AntipulgasUpdateRequestDTO request,
+                                                                  @PathVariable Long id){
+        return ResponseEntity.ok(service.updateAntipulgas(request, id));
     }
 
     @DeleteMapping("/{id}")

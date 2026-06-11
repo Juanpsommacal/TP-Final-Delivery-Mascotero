@@ -1,9 +1,11 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
+import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
 import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.AlimentoMapper;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.AlimentoCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Alimento.AlimentoCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Alimento.AlimentoUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.AlimentoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AlimentoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.AlimentoRepository;
@@ -53,6 +55,67 @@ public class AlimentoService {
         repository.save(entity);
     }
 
+    public AlimentoResponseDTO updateAlimento(AlimentoUpdateRequestDTO request, Long id){
+        AlimentoEntity entity = getEntityById(id);
+
+        // Corroboro que el Alimento este Activo
+        if (!entity.getActivo()){
+            throw new InactiveResourceException("El producto de tipo alimento esta dado de baja");
+        }
+
+        updateCommonFields(entity, request);
+        updateSpecificFields(entity, request);
+
+        return mapper.toResponse(repository.save(entity));
+    }
+
     ///----- Validations -----
+
+    private void updateCommonFields(AlimentoEntity entity, AlimentoUpdateRequestDTO request){
+        if (request.getNombre() != null) {
+            if(request.getNombre().trim().isEmpty()){
+                throw new EmptyUpdateFieldException("El nombre puede ser solo espacios en blanco");
+            }
+            entity.setNombre(request.getNombre());
+        }
+
+        if (request.getDescripcion() != null) {
+            if (request.getDescripcion().trim().isEmpty()){
+                throw new EmptyUpdateFieldException("La descripcion no puede ser solo espacios en blanco");
+            }
+            entity.setDescripcion(request.getDescripcion());
+        }
+
+        if (request.getPrecio() != null) {
+            entity.setPrecio(request.getPrecio());
+        }
+
+        if (request.getStock() != null) {
+            entity.setStock(request.getStock());
+        }
+
+        if (request.getMarca() != null) {
+            if (request.getMarca().trim().isEmpty()){
+                throw new EmptyUpdateFieldException("La marca no puede ser solo espacios en blanco");
+            }
+            entity.setMarca(request.getMarca());
+        }
+    }
+
+    private void updateSpecificFields(AlimentoEntity entity, AlimentoUpdateRequestDTO request){
+        if (request.getPeso() != null){
+            entity.setPeso(request.getPeso());
+        }
+        if (request.getUnidadMedida() != null){
+            entity.setUnidadMedida(request.getUnidadMedida());
+        }
+        if (request.getEtapaVida() != null){
+            entity.setEtapaVida(request.getEtapaVida());
+        }
+        if (request.getTipoAnimal() != null){
+            entity.setTipoAnimal(request.getTipoAnimal());
+        }
+    }
+
 
 }
