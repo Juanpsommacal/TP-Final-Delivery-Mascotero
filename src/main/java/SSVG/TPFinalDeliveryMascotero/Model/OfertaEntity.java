@@ -36,7 +36,7 @@ public class OfertaEntity {
     @Column(nullable = false)
     private LocalDate fechaFin;
 
-    @OneToMany(mappedBy = "oferta")
+    @OneToMany(mappedBy = "oferta", cascade = CascadeType.ALL)
     private List<ProductoEntity> productos;
 
 }

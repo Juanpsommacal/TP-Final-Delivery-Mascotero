@@ -3,7 +3,6 @@ package SSVG.TPFinalDeliveryMascotero.Controller;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor.ProveedorCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor.ProveedorUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ProveedorResponseDTO;
-import SSVG.TPFinalDeliveryMascotero.Model.ProveedorEntity;
 import SSVG.TPFinalDeliveryMascotero.Service.ProveedorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +43,7 @@ public class ProveedorController {
 
     @DeleteMapping("{id}")
     public ResponseEntity<ProveedorResponseDTO> deleteProveedor(@PathVariable Long id){
-        service.deleteProveedor(id);
+        service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }
