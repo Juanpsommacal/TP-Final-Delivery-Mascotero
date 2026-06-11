@@ -14,6 +14,7 @@ import lombok.Setter;
 public class ProveedorCreateRequestDTO {
 
     @NotBlank(message = "El nombre no puede estar vacio")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras y espacios")
     private String nombre;
 
     @NotBlank(message = "El telefono no puede estar vacio")
