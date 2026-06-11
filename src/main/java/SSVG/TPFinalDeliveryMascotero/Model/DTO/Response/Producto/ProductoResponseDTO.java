@@ -1,6 +1,5 @@
-package SSVG.TPFinalDeliveryMascotero.Model.DTO.Response;
+package SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto;
 
-import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.Setter;
 

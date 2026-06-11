@@ -45,6 +45,8 @@ public class ProveedorService {
                 .toList();
     }
 
+    /// -------- Updates ----------
+
     public ProveedorResponseDTO updateProveedor(ProveedorUpdateRequestDTO request, Long id){
         ProveedorEntity proveedor = getEntityById(id);
 
@@ -73,7 +75,7 @@ public class ProveedorService {
         return mapper.toResponse(repository.save(proveedor));
     }
 
-    public void deleteProveedor(Long id){
+    public void deleteById(Long id){
         ProveedorEntity entity = getEntityById(id);
 
         if (entity.getActivo() == false){
