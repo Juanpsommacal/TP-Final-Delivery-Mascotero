@@ -5,9 +5,12 @@ import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
 import SSVG.TPFinalDeliveryMascotero.Exception.InsufficientStockException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
+import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.PedidoCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetallePedidoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
@@ -32,7 +35,7 @@ public class PedidoService {
     private final PedidoRepository repository;
     private final ClienteService clienteService;
     private final ProductoService productoService;
-    private final DireccionService direccionService;
+    private final DireccionMapper direccionMapper;
     private final PedidoMapper mapper;
 
     @Transactional
@@ -41,11 +44,9 @@ public class PedidoService {
         //Buscamos si el cliente existe
         ClienteEntity cliente = clienteService.getEntityById(request.getClienteId());
 
-        //Buscamos si la direccion existe
-        DireccionEntity direccion = direccionService.getEntityById(request.getDireccionId());
-
-        //Verificamos si el cliente tiene esa direccion asociada
-        if(!clienteService.isAssociated(cliente, direccion.getId()))
+        //Buscamos si el cliente tiene esa direccion
+        DireccionEntity direccionRequest = direccionMapper.toEntity(request.getDireccion());
+        if(!clienteService.hasDireccion(cliente, direccionRequest))
             throw new ResourceNotAssociatedException("El cliente no tiene esa direccion asociada");
 
         //Ahora verificamos si el stock que tenemos es suficiente para el pedido
@@ -73,14 +74,15 @@ public class PedidoService {
             throw new InsufficientStockException(errorsMap);
 
 
-        //Sino creamos el pedido vacio y vamos seteando los atributos
+        //Creamos el pedido vacio y vamos seteando los atributos
         PedidoEntity newPedido = new PedidoEntity();
 
         newPedido.setCliente(cliente);
         newPedido.setFecha(LocalDate.now());
         newPedido.setEstadoPedido(EstadoPedido.PENDIENTE);
         newPedido.setEstadoPago(EstadoPago.PENDIENTE);
-        newPedido.setDireccion(direccion);
+        newPedido.setDireccionCompleta(formatearDireccionCompleta(direccionRequest));
+        newPedido.setPisoDepto(formatearPisoDepto(direccionRequest));
 
         //Calculamos el precio total del pedido
         BigDecimal montoTotal = request.getDetalles()
@@ -148,4 +150,28 @@ public class PedidoService {
                 .map(mapper::toResponse)
                 .toList();
     }
+
+    /// ----- Formateo -----
+
+    private String formatearDireccionCompleta(DireccionEntity direccion) {
+        return direccion.getCalle() + " " + direccion.getNumero();
+    }
+
+    private String formatearPisoDepto(DireccionEntity direccion) {
+        if (direccion.getPiso() == null && direccion.getDepartamento() == null) {
+            return "Sin especificar";
+        }
+
+        if (direccion.getPiso() == null) {
+            return "Depto: " + direccion.getDepartamento();
+        }
+
+        if (direccion.getDepartamento() == null || direccion.getDepartamento().isBlank()) {
+            return "Piso: " + direccion.getPiso();
+        }
+
+        return "Piso: " + direccion.getPiso()
+                + " | Depto: " + direccion.getDepartamento();
+    }
+
 }

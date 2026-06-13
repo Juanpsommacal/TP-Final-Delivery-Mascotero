@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -109,6 +110,16 @@ public class ClienteService {
         // "anyMatch" devuelve un boolean, y sirve para saber si en la lista de direcciones ya existe una con ese ID
         return cliente.getDirecciones().stream()
                 .anyMatch(d -> d.getId().equals(direccionId));
+    }
+
+    public boolean hasDireccion(ClienteEntity cliente, DireccionEntity direccionParam){
+        return cliente.getDirecciones().stream()
+                .anyMatch(direccionCliente ->
+                        direccionCliente.getCalle().equalsIgnoreCase(direccionParam.getCalle())
+                                && direccionCliente.getNumero().equals(direccionParam.getNumero())
+                                && Objects.equals(direccionCliente.getPiso(), direccionParam.getPiso())
+                                && Objects.equals(direccionCliente.getDepartamento(), direccionParam.getDepartamento())
+                );
     }
 
 }
