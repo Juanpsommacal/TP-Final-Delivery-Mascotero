@@ -43,6 +43,11 @@ public class DireccionService {
                 .toList();
     }
 
+    void saveEntity(DireccionEntity entity){
+        repository.save(entity);
+    }
+
+
     ///----- Updates -----
 
     public DireccionResponseDTO updateDireccion(DireccionUpdateRequestDTO request, Long id){
