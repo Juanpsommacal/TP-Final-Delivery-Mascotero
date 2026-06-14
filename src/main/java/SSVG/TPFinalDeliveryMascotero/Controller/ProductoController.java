@@ -1,6 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ProductoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.ProductoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

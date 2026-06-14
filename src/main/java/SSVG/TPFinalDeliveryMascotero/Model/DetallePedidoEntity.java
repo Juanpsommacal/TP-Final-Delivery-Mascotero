@@ -27,7 +27,7 @@ public class DetallePedidoEntity {
     @Column(nullable = false)
     private BigDecimal precioUnitario;
 
-    private Double descuentoAplicado;
+    private Double descuentoAplicado = null;
 
     @ManyToOne
     @JoinColumn(name = "pedido_id", nullable = false)

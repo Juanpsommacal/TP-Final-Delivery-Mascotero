@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class OfertaEntity {
     private String descripcion;
 
     @Column(nullable = false)
-    private Double porcentaje;
+    private BigDecimal porcentaje;
 
     @Column(nullable = false)
     private LocalDate fechaInicio;
@@ -36,7 +37,9 @@ public class OfertaEntity {
     @Column(nullable = false)
     private LocalDate fechaFin;
 
-    @OneToMany(mappedBy = "oferta")
+    @OneToMany(mappedBy = "oferta", cascade = CascadeType.ALL)
     private List<ProductoEntity> productos;
+
+
 
 }

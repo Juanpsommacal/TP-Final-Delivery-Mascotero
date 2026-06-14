@@ -1,7 +1,8 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Compra.OfertaRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Oferta.OfertaCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.OfertaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.OfertaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,52 +17,75 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OfertaController {
 
-    private final OfertaService ofertaService;
+    private final OfertaService service;
+    //quita productos de odertas
 
-    @PostMapping
-    public ResponseEntity<OfertaResponseDTO> create(
-            @Valid @RequestBody OfertaRequestDTO requestDTO) {
+    @DeleteMapping("/{ofertaId}/delete-products")
+    public ResponseEntity<OfertaResponseDTO> removeAllProductsFromOffer(
+            @PathVariable Long ofertaId) {
 
-        OfertaResponseDTO response = ofertaService.create(requestDTO);
+        OfertaResponseDTO response =
+                service.removeAllProductsFromOffer(ofertaId);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(response);
+        return ResponseEntity.ok(response);
+    }
+    //quita oferta a Un solo Producto.
+    @PatchMapping("/{ofertaId}/producto/{productoId}/remove")
+    public ResponseEntity<OfertaResponseDTO> removeProductFromOffer(
+            @PathVariable Long ofertaId,
+            @PathVariable Long productoId) {
+
+        return ResponseEntity.ok(
+                service.removeProductFromOffer(ofertaId, productoId)
+        );
     }
 
+    @PatchMapping("/{ofertaId}/all-products")
+    public ResponseEntity<OfertaResponseDTO> associateAllProducts(
+            @PathVariable Long ofertaId) {
+
+        return ResponseEntity.ok(
+                service.associateAllProductsToOffer(ofertaId)
+        );
+    }
+
+    @PostMapping
+    public ResponseEntity<OfertaResponseDTO> create(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
+        OfertaResponseDTO response = service.createOferta(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     @GetMapping
     public ResponseEntity<List<OfertaResponseDTO>> getAll() {
-
-        return ResponseEntity.ok(
-                ofertaService.getAll()
-        );
+        return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OfertaResponseDTO> getById(
-            @PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                ofertaService.getById(id)
-        );
+    public ResponseEntity<OfertaResponseDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getDTOById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<OfertaResponseDTO> update(
-            @PathVariable Long id,
-            @RequestBody OfertaRequestDTO requestDTO) {
-
-        return ResponseEntity.ok(
-                ofertaService.update(id, requestDTO)
-        );
+    public ResponseEntity<OfertaResponseDTO> updateOferta(@PathVariable Long id,
+                                                          @RequestBody OfertaCreateRequestDTO request)
+    {
+        return ResponseEntity.ok(service.updateOffer(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable Long id) {
-
-        ofertaService.delete(id);
-
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{ofertaId}/producto/{productoId}")
+    public ResponseEntity<OfertaResponseDTO> associateProduct(
+            @PathVariable Long ofertaId,
+            @PathVariable Long productoId) {
+
+        return ResponseEntity.ok(
+                service.associateProductToOffer(ofertaId, productoId)
+        );
+    }
+
 }

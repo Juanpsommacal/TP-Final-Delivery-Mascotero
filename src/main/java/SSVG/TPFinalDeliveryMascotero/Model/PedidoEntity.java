@@ -42,7 +42,7 @@ public class PedidoEntity {
     @Column(nullable = false)
     private EstadoPago estadoPago;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "direccion_id")
     private DireccionEntity direccion;
 
