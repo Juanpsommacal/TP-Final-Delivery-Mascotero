@@ -44,17 +44,32 @@ public class OfertaService {
             List<ProductoEntity> productos =
                     getValidProducts(request.getProductosIds());
 
-            // Validar que ningún producto tenga una oferta asociada
             for (ProductoEntity producto : productos) {
 
                 ProductoEntity productoActual =
                         productoService.getEntityById(producto.getId());
 
+                // Si tiene oferta asociada
                 if (productoActual.getOferta() != null) {
-                    throw new ProductAlreadyHasOfferException(
-                            "El producto con ID " + producto.getId()
-                                    + " ya tiene una oferta asociada."
-                    );
+
+                    OfertaEntity ofertaActual =
+                            productoActual.getOferta();
+
+                    // Si la oferta sigue activa -> error
+                    if (isOfferActive(ofertaActual)) {
+                        throw new ProductAlreadyHasOfferException(
+                                "El producto con ID "
+                                        + producto.getId()
+                                        + " ya tiene una oferta activa asociada."
+                        );
+                    }
+
+                    // Si la oferta venció -> la desasociamos
+                    productoActual.setOferta(null);
+
+                    if (ofertaActual.getProductos() != null) {
+                        ofertaActual.getProductos().remove(productoActual);
+                    }
                 }
             }
 
