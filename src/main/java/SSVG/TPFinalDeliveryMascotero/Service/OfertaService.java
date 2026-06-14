@@ -1,20 +1,21 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
-import SSVG.TPFinalDeliveryMascotero.Exception.InvalidDateRangeException;
+import SSVG.TPFinalDeliveryMascotero.Exception.ProductAlreadyHasOfferException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.OfertaMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Oferta.OfertaCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.OfertaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.OfertaEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.OfertaRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -138,6 +139,8 @@ public class OfertaService {
         productos.forEach(producto -> producto.setOferta(oferta));
     }
 
+    //
+
     // Se hacer la desasociacion de una Oferta y sus productos, para utilizar
     // en los metodos de actualizacion y eliminacion de Ofertas
     private void clearProductsFromOffer(OfertaEntity oferta){
@@ -149,4 +152,76 @@ public class OfertaService {
             oferta.getProductos().clear();
         }
     }
+
+    @Transactional
+    public OfertaResponseDTO removeAllProductsFromOffer(Long ofertaId) {
+
+        OfertaEntity oferta = getEntityById(ofertaId);
+
+        clearProductsFromOffer(oferta);
+
+        OfertaEntity ofertaActualizada = repository.save(oferta);
+
+        return mapper.toResponse(ofertaActualizada);
+    }
+
+    @Transactional
+    public OfertaResponseDTO associateProductToOffer(Long ofertaId, Long productoId) {
+
+        OfertaEntity oferta = getEntityById(ofertaId);
+
+        ProductoEntity producto = getValidProduct(productoId);
+
+        if (producto.getOferta() != null) {
+            throw new ProductAlreadyHasOfferException(
+                    "El producto ya tiene una oferta asignada."
+            );
+        }
+
+        producto.setOferta(oferta);
+
+        if (oferta.getProductos() == null) {
+            oferta.setProductos(new ArrayList<>());
+        }
+
+        if (!oferta.getProductos().contains(producto)) {
+            oferta.getProductos().add(producto);
+        }
+
+        return mapper.toResponse(repository.save(oferta));
+    }
+
+
+    private BigDecimal aplicarDescuento(
+            BigDecimal precio,
+            BigDecimal porcentaje) {
+
+        return precio.multiply(
+                BigDecimal.ONE.subtract(
+                        porcentaje.divide(BigDecimal.valueOf(100))
+                )
+        );
+    }
+
+
+    @Transactional
+    public List<ProductoResponseDTO> applyOfferToExistingProducts(Long idOferta) {
+
+        OfertaEntity oferta = getEntityById(idOferta);
+
+        BigDecimal porcentaje = oferta.getPorcentaje();
+
+        List<ProductoEntity> productosActualizados = oferta.getProductos()
+                .stream()
+                .peek(producto -> producto.setPrecio(
+                        aplicarDescuento(
+                                producto.getPrecio(),
+                                porcentaje
+                        )
+                ))
+                .toList();
+
+        return productoService.saveAllProductsOriginalPrice(productosActualizados);
+    }
+
 }

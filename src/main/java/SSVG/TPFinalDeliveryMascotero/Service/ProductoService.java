@@ -36,4 +36,12 @@ public class ProductoService {
         repository.save(entity);
     }
 
+    public List<ProductoResponseDTO> saveAllProductsOriginalPrice(List<ProductoEntity> list) {
+
+        return repository.saveAll(list)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
 }

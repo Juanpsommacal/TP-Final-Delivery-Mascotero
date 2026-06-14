@@ -2,6 +2,7 @@ package SSVG.TPFinalDeliveryMascotero.Controller;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Oferta.OfertaCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.OfertaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.OfertaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,16 @@ import java.util.List;
 public class OfertaController {
 
     private final OfertaService service;
+    //quita productos de odertas
+    @DeleteMapping("/{ofertaId}/delete-products")
+    public ResponseEntity<OfertaResponseDTO> removeAllProductsFromOffer(
+            @PathVariable Long ofertaId) {
+
+        OfertaResponseDTO response =
+                service.removeAllProductsFromOffer(ofertaId);
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     public ResponseEntity<OfertaResponseDTO> create(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
@@ -46,4 +57,25 @@ public class OfertaController {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{ofertaId}/producto/{productoId}")
+    public ResponseEntity<OfertaResponseDTO> associateProduct(
+            @PathVariable Long ofertaId,
+            @PathVariable Long productoId) {
+
+        return ResponseEntity.ok(
+                service.associateProductToOffer(ofertaId, productoId)
+        );
+    }
+    @PatchMapping("/{ofertaId}/aplicar-oferta")
+    public ResponseEntity<List<ProductoResponseDTO>> ApplyOffer(
+            @PathVariable Long ofertaId) {
+
+        List<ProductoResponseDTO> productos =service.applyOfferToExistingProducts(ofertaId);
+
+        return ResponseEntity.ok(productos);
+    }
+
+
+
 }

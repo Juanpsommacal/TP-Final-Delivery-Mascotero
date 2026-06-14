@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class OfertaCreateRequestDTO {
     @NotNull(message = "El porcentaje es obligatorio")
     @DecimalMin(value = "0.01", message = "El porcentaje debe ser mayor a 0")
     @DecimalMax(value = "100.0", message = "El porcentaje cargado no puede ser mayor a 100")
-    private Double porcentaje;
+    private BigDecimal porcentaje;
 
     @NotNull(message = "La fecha de inicio es obligatoria")
     private LocalDate fechaInicio;

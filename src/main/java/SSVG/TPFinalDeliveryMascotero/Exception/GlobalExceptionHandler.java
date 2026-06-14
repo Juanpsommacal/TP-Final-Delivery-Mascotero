@@ -161,4 +161,12 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(error);
     }
+    @ExceptionHandler(ProductAlreadyHasOfferException.class)
+    public ResponseEntity<String> handleProductAlreadyHasOfferException(ProductAlreadyHasOfferException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+
 }
