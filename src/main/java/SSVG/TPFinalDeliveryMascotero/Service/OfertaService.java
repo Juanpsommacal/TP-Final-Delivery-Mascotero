@@ -38,8 +38,25 @@ public class OfertaService {
 
         OfertaEntity newOferta = mapper.toEntity(request);
 
-        if (request.getProductosIds() != null && !request.getProductosIds().isEmpty()){
-            List<ProductoEntity> productos = getValidProducts(request.getProductosIds());
+        if (request.getProductosIds() != null &&
+                !request.getProductosIds().isEmpty()) {
+
+            List<ProductoEntity> productos =
+                    getValidProducts(request.getProductosIds());
+
+            // Validar que ningún producto tenga una oferta asociada
+            for (ProductoEntity producto : productos) {
+
+                ProductoEntity productoActual =
+                        productoService.getEntityById(producto.getId());
+
+                if (productoActual.getOferta() != null) {
+                    throw new ProductAlreadyHasOfferException(
+                            "El producto con ID " + producto.getId()
+                                    + " ya tiene una oferta asociada."
+                    );
+                }
+            }
 
             associateProductsToOffer(productos, newOferta);
             newOferta.setProductos(productos);
@@ -47,7 +64,7 @@ public class OfertaService {
 
         OfertaEntity savedOferta = repository.save(newOferta);
 
-        return mapper.toResponse(repository.save(savedOferta));
+        return mapper.toResponse(savedOferta);
     }
 
     public OfertaEntity getEntityById(Long id) {
