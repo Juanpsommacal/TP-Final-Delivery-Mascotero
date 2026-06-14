@@ -33,7 +33,7 @@ public class AlimentoService {
         Optional<AlimentoEntity> entity = repository.findById(id);
         if(entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("El alimento no existe.");
+        else throw new ResourceNotFoundException("El alimento con la ID: " + id + " no existe.");
     }
 
     public AlimentoResponseDTO getDTOById(Long id){
@@ -60,7 +60,7 @@ public class AlimentoService {
 
         // Corroboro que el Alimento este Activo
         if (!entity.getActivo()){
-            throw new InactiveResourceException("El producto de tipo alimento esta dado de baja");
+            throw new InactiveResourceException("El producto esta dado de baja");
         }
 
         updateCommonFields(entity, request);

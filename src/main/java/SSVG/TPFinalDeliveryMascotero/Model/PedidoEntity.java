@@ -42,9 +42,10 @@ public class PedidoEntity {
     @Column(nullable = false)
     private EstadoPago estadoPago;
 
-    @ManyToOne
-    @JoinColumn(name = "direccion_id")
-    private DireccionEntity direccion;
+    @Column(nullable = false)
+    private String direccionCompleta;
+
+    private String pisoDepto;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedidoEntity> productos = new ArrayList<>();

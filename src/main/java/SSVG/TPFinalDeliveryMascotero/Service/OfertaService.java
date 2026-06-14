@@ -49,7 +49,7 @@ public class OfertaService {
         Optional<OfertaEntity> entity = repository.findById(id);
         if (entity.isPresent())
             return entity.get();
-            else throw new ResourceNotFoundException("La Oferta con el ID: " +id+ " no existe");
+            else throw new ResourceNotFoundException("La Oferta con el ID: " + id + " no existe");
     }
 
     public OfertaResponseDTO getDTOById(Long id){
