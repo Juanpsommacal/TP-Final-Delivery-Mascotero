@@ -2,6 +2,7 @@ package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Proveedor;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,8 +14,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ProveedorCreateRequestDTO {
 
-    @NotBlank(message = "El nombre no puede estar vacio")
+    @NotBlank(message = "El nombre del proveedor no puede estar vacio")
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras y espacios")
+    @Size(max = 30, message = "El nombre del proveedor no puede exceder los 30 caracteres")
     private String nombre;
 
     @NotBlank(message = "El telefono no puede estar vacio")

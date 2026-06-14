@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Mapper;
 
+import SSVG.TPFinalDeliveryMascotero.Mapper.Helper.EnumMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.CompraEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Compra.CompraCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.CompraResponseDTO;
@@ -10,7 +11,7 @@ import org.mapstruct.Mapping;
 import java.util.List;
 //Le decimos a nuestro mapper que use el mapper de DetalleCompra tambien
 @Mapper(componentModel = "spring",
-        uses = {DetalleCompraMapper.class})
+        uses = {DetalleCompraMapper.class, EnumMapper.class})
 public interface CompraMapper {
 
     public CompraEntity toEntity (CompraCreateRequestDTO request);

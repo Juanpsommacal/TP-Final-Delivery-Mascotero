@@ -7,6 +7,9 @@ import SSVG.TPFinalDeliveryMascotero.Mapper.AlimentoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Alimento.AlimentoCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Alimento.AlimentoUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.AlimentoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.EtapaVida;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAnimal;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.UnidadMedida;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AlimentoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.AlimentoRepository;
 import lombok.RequiredArgsConstructor;
@@ -107,13 +110,13 @@ public class AlimentoService {
             entity.setPeso(request.getPeso());
         }
         if (request.getUnidadMedida() != null){
-            entity.setUnidadMedida(request.getUnidadMedida());
+            entity.setUnidadMedida(UnidadMedida.valueOf(request.getUnidadMedida().toUpperCase()));
         }
         if (request.getEtapaVida() != null){
-            entity.setEtapaVida(request.getEtapaVida());
+            entity.setEtapaVida(EtapaVida.valueOf(request.getEtapaVida().toUpperCase()));
         }
         if (request.getTipoAnimal() != null){
-            entity.setTipoAnimal(request.getTipoAnimal());
+            entity.setTipoAnimal(TipoAnimal.valueOf(request.getTipoAnimal().toUpperCase()));
         }
     }
 

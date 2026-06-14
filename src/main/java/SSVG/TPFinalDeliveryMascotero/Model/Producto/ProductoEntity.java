@@ -24,9 +24,10 @@ public abstract class ProductoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String nombre;
 
+    @Column(length = 100)
     private String descripcion;
 
     @Column(nullable = false)
@@ -35,7 +36,7 @@ public abstract class ProductoEntity {
     @Column(nullable = false)
     private Integer stock;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private String marca;
 
     @Column(nullable = false)
