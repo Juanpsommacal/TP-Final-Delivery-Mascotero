@@ -33,4 +33,10 @@ public class PedidoController {
     public ResponseEntity<PedidoResponseDTO> getById(@PathVariable Long id){
         return ResponseEntity.ok(service.getDTOById(id));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<PedidoResponseDTO> deletePedido(@PathVariable Long id){
+        service.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

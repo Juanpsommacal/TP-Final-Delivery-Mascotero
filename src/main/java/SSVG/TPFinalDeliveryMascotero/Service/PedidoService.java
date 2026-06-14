@@ -50,7 +50,10 @@ public class PedidoService {
             throw new ResourceNotAssociatedException("El cliente no tiene esa direccion asociada");
 
         //Ahora verificamos si el stock que tenemos es suficiente para el pedido
-        Map<String, String> errorsMap = new HashMap<>();
+        Map<String, List<String>> errorsMap = new HashMap<>();
+        List<String> productosSinStock = new ArrayList<>();
+        List<String> productosInactivos = new ArrayList<>();
+
         request.getDetalles()
                 .forEach(detalle -> {
 
@@ -58,19 +61,21 @@ public class PedidoService {
 
                     //Si hay algun producto que no tenga stock lo guardamos en errorsMap
                     if(producto.getStock() < detalle.getCantidad())
-                        errorsMap.put(producto.getMarca().concat(producto.getNombre()),
-                                    "| Stock necesario: "
-                                    + detalle.getCantidad()
-                                    + "| Stock disponible: "
-                                    + producto.getStock());
+                        productosSinStock.add(producto.getMarca().concat(" ").concat(producto.getNombre()) +
+                                " | Stock necesario: "
+                                + detalle.getCantidad()
+                                + " | Stock disponible: "
+                                + producto.getStock());
                     //Ahora verificamos que no haya ningun producto inactivo
                     if(!producto.getActivo())
-                        errorsMap.put(producto.getMarca().concat(producto.getNombre()),
-                                "| Producto inactivo");
+                        productosInactivos.add(producto.getMarca().concat(" ").concat(producto.getNombre()));
                 });
 
+        errorsMap.put("Productos sin stock: ", productosSinStock);
+        errorsMap.put("Productos inactivos: ", productosInactivos);
+
         //Revisamos si errorsMap tiene contenido. Si hay errores tiramos la excepcion
-        if(!errorsMap.isEmpty())
+        if(!errorsMap.get("Productos sin stock: ").isEmpty() || !errorsMap.get("Productos inactivos: ").isEmpty())
             throw new InsufficientStockException(errorsMap);
 
 
@@ -138,7 +143,7 @@ public class PedidoService {
         Optional<PedidoEntity> entity = repository.findById(id);
         if(entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("El pedido no existe");
+        else throw new ResourceNotFoundException("El pedido con la ID: " + id + " no existe");
     }
 
     public PedidoResponseDTO getDTOById(Long id){
@@ -149,6 +154,29 @@ public class PedidoService {
         return repository.findAll().stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    /// ----- Updates / Delete -----
+
+    public void deleteById(Long id){
+        PedidoEntity pedido = getEntityById(id);
+        //Verificamos que el pedido no este cancelado
+        if(pedido.getEstadoPedido().equals(EstadoPedido.CANCELADO))
+            throw new InactiveResourceException("El pedido con la ID: " + id + " ya fue cancelado");
+
+        //Recorremos el detalle de productos y devolvemos el stock
+        pedido.getProductos()
+                .forEach(detalle -> {
+                    ProductoEntity producto = productoService.getEntityById(detalle.getProducto().getId());
+                    producto.setStock(producto.getStock() + detalle.getCantidad());
+                    productoService.saveEntity(producto);
+                });
+
+        //Seteamos el pedido como CANCELADO
+        pedido.setEstadoPedido(EstadoPedido.CANCELADO);
+
+        //Guardamos en el repo
+        repository.save(pedido);
     }
 
     /// ----- Formateo -----

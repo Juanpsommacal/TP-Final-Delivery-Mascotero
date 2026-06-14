@@ -33,7 +33,7 @@ public class AntipulgasService {
         Optional<AntipulgasEntity> entity = repository.findById(id);
         if(entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("El antipulgas no existe");
+        else throw new ResourceNotFoundException("El antipulgas con la ID: " + id + " no existe");
     }
 
     public AntipulgasResponseDTO getDTOById(Long id){

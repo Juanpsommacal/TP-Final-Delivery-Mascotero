@@ -32,7 +32,7 @@ public class ProveedorService {
         Optional<ProveedorEntity> entity = repository.findById(id);
         if(entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("El Proveedor no existe");
+        else throw new ResourceNotFoundException("El Proveedor con la ID: "  + id +  " no existe");
     }
 
     public ProveedorResponseDTO getDTOById(Long id){
@@ -45,7 +45,7 @@ public class ProveedorService {
                 .toList();
     }
 
-    /// -------- Updates ----------
+    /// -------- Updates / Delete  ----------
 
     public ProveedorResponseDTO updateProveedor(ProveedorUpdateRequestDTO request, Long id){
         ProveedorEntity proveedor = getEntityById(id);

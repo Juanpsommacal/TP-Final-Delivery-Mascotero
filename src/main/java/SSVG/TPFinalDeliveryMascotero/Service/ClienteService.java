@@ -38,7 +38,7 @@ public class ClienteService {
         Optional<ClienteEntity> entity = repository.findById(id);
         if (entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("El cliente no existe");
+        else throw new ResourceNotFoundException("El cliente con la ID: " + id + " no existe");
     }
 
     public ClienteResponseDTO getDTOById(Long id){

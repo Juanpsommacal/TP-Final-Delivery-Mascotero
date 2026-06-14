@@ -15,8 +15,10 @@ public interface PedidoMapper {
     @Mapping(target = "nombreCliente",
             expression = "java(getNombreClienteCompleto(entity))")
     @Mapping(target = "detallePedido", source = "productos")
+    //Estos 3 Mappings los tuve que hacer manual porque no funcionan. No se por que
     @Mapping(target = "direccionCompleta", source = "direccionCompleta")
     @Mapping(target = "pisoDepto", source = "pisoDepto")
+    @Mapping(target = "id", source = "id")
     public PedidoResponseDTO toResponse (PedidoEntity entity);
 
     default String getNombreClienteCompleto(PedidoEntity entity){
