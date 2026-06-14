@@ -24,6 +24,11 @@ public class ProductoService {
                 .map(mapper::toResponse)
                 .toList();
     }
+    public List<ProductoEntity> getAll2(){
+        return repository.findAll().stream()
+                .toList();
+    }
+
 
     public ProductoEntity getEntityById(Long id){
         Optional<ProductoEntity> producto = repository.findById(id);

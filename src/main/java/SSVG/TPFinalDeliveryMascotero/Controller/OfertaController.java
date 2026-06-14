@@ -19,6 +19,7 @@ public class OfertaController {
 
     private final OfertaService service;
     //quita productos de odertas
+
     @DeleteMapping("/{ofertaId}/delete-products")
     public ResponseEntity<OfertaResponseDTO> removeAllProductsFromOffer(
             @PathVariable Long ofertaId) {
@@ -27,6 +28,25 @@ public class OfertaController {
                 service.removeAllProductsFromOffer(ofertaId);
 
         return ResponseEntity.ok(response);
+    }
+    //quita oferta a Un solo Producto.
+    @PatchMapping("/{ofertaId}/producto/{productoId}/remove")
+    public ResponseEntity<OfertaResponseDTO> removeProductFromOffer(
+            @PathVariable Long ofertaId,
+            @PathVariable Long productoId) {
+
+        return ResponseEntity.ok(
+                service.removeProductFromOffer(ofertaId, productoId)
+        );
+    }
+
+    @PatchMapping("/{ofertaId}/all-products")
+    public ResponseEntity<OfertaResponseDTO> associateAllProducts(
+            @PathVariable Long ofertaId) {
+
+        return ResponseEntity.ok(
+                service.associateAllProductsToOffer(ofertaId)
+        );
     }
 
     @PostMapping
@@ -49,7 +69,7 @@ public class OfertaController {
     public ResponseEntity<OfertaResponseDTO> updateOferta(@PathVariable Long id,
                                                           @RequestBody OfertaCreateRequestDTO request)
     {
-        return ResponseEntity.ok(service.updateOferta(id, request));
+        return ResponseEntity.ok(service.updateOffer(id, request));
     }
 
     @DeleteMapping("/{id}")
@@ -67,15 +87,5 @@ public class OfertaController {
                 service.associateProductToOffer(ofertaId, productoId)
         );
     }
-    @PatchMapping("/{ofertaId}/aplicar-oferta")
-    public ResponseEntity<List<ProductoResponseDTO>> ApplyOffer(
-            @PathVariable Long ofertaId) {
-
-        List<ProductoResponseDTO> productos =service.applyOfferToExistingProducts(ofertaId);
-
-        return ResponseEntity.ok(productos);
-    }
-
-
 
 }

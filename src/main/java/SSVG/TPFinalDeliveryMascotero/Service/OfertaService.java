@@ -64,7 +64,7 @@ public class OfertaService {
     }
 
     @Transactional
-    public OfertaResponseDTO updateOferta(Long id, OfertaCreateRequestDTO request) {
+    public OfertaResponseDTO updateOffer(Long id, OfertaCreateRequestDTO request) {
         OfertaEntity oferta = getEntityById(id);
 
         validateDates(request.getFechaInicio(), request.getFechaFin());
@@ -165,31 +165,31 @@ public class OfertaService {
         return mapper.toResponse(ofertaActualizada);
     }
 
-    @Transactional
-    public OfertaResponseDTO associateProductToOffer(Long ofertaId, Long productoId) {
+        @Transactional
+        public OfertaResponseDTO associateProductToOffer(Long ofertaId, Long productoId) {
 
-        OfertaEntity oferta = getEntityById(ofertaId);
+            OfertaEntity oferta = getEntityById(ofertaId);
 
-        ProductoEntity producto = getValidProduct(productoId);
+            ProductoEntity producto = getValidProduct(productoId);
 
-        if (producto.getOferta() != null) {
-            throw new ProductAlreadyHasOfferException(
-                    "El producto ya tiene una oferta asignada."
-            );
+            if (producto.getOferta() != null) {
+                throw new ProductAlreadyHasOfferException(
+                        "El producto ya tiene una oferta asignada."
+                );
+            }
+
+            producto.setOferta(oferta);
+
+            if (oferta.getProductos() == null) {
+                oferta.setProductos(new ArrayList<>());
+            }
+
+            if (!oferta.getProductos().contains(producto)) {
+                oferta.getProductos().add(producto);
+            }
+
+            return mapper.toResponse(repository.save(oferta));
         }
-
-        producto.setOferta(oferta);
-
-        if (oferta.getProductos() == null) {
-            oferta.setProductos(new ArrayList<>());
-        }
-
-        if (!oferta.getProductos().contains(producto)) {
-            oferta.getProductos().add(producto);
-        }
-
-        return mapper.toResponse(repository.save(oferta));
-    }
 
 
     private BigDecimal aplicarDescuento(
@@ -204,24 +204,62 @@ public class OfertaService {
     }
 
 
+
     @Transactional
-    public List<ProductoResponseDTO> applyOfferToExistingProducts(Long idOferta) {
+    public OfertaResponseDTO associateAllProductsToOffer(Long ofertaId) {
 
-        OfertaEntity oferta = getEntityById(idOferta);
+        OfertaEntity oferta = getEntityById(ofertaId);
 
-        BigDecimal porcentaje = oferta.getPorcentaje();
+        List<ProductoEntity> productos =
+                productoService.getAll2();
 
-        List<ProductoEntity> productosActualizados = oferta.getProductos()
-                .stream()
-                .peek(producto -> producto.setPrecio(
-                        aplicarDescuento(
-                                producto.getPrecio(),
-                                porcentaje
-                        )
-                ))
-                .toList();
+        if (oferta.getProductos() == null) {
+            oferta.setProductos(new ArrayList<>());
+        }
 
-        return productoService.saveAllProductsOriginalPrice(productosActualizados);
+        for (ProductoEntity producto : productos) {
+
+            producto.setOferta(oferta);
+
+            if (!oferta.getProductos().contains(producto)) {
+                oferta.getProductos().add(producto);
+            }
+        }
+
+        return mapper.toResponse(repository.save(oferta));
     }
+    // Quita oferta de solo un Producto Segun id
+    @Transactional
+    public OfertaResponseDTO removeProductFromOffer(
+            Long ofertaId,
+            Long productoId) {
+
+        OfertaEntity oferta = getEntityById(ofertaId);
+
+        ProductoEntity producto =
+                productoService.getEntityById(productoId);
+
+        if (producto.getOferta() == null) {
+            throw new ResourceNotFoundException(
+                    "El producto no tiene ninguna oferta asociada."
+            );
+        }
+
+        if (!producto.getOferta().getId().equals(ofertaId)) {
+            throw new ResourceNotFoundException(
+                    "El producto no pertenece a esta oferta."
+            );
+        }
+
+        producto.setOferta(null);
+
+        if (oferta.getProductos() != null) {
+            oferta.getProductos().remove(producto);
+        }
+
+        return mapper.toResponse(repository.save(oferta));
+    }
+
+
 
 }
