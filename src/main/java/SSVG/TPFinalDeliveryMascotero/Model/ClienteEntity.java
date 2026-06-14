@@ -21,13 +21,13 @@ public class ClienteEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String apellido;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 15)
     private String telefono;
 
     @ManyToMany

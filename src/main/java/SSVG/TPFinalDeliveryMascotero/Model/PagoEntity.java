@@ -30,7 +30,7 @@ public class PagoEntity {
     private BigDecimal monto;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private MetodoPago metodoPago;
 
     @ManyToOne

@@ -69,9 +69,6 @@ public class CompraService {
                     ProductoEntity producto =
                             productoService.getEntityById(requestDetalle.getProductoId());
 
-                    // Se le aumenta el Stock del Producto (stockActual + la cantidad ingresada)
-                    increaseProductStock(producto, requestDetalle.getCantidad());
-
                     //Creamos los detalleCompraEntity y seteamos los atributos
                     DetalleCompraEntity newDetalle = new DetalleCompraEntity();
                     newDetalle.setCompra(savedCompra);
@@ -109,6 +106,7 @@ public class CompraService {
 
     // Funciones Utiles
 
+    //NO se para que esta esto...
     private void increaseProductStock(ProductoEntity producto, Integer cantidad){
         Integer stockActual = producto.getStock();
 
