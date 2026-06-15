@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +29,11 @@ public class OfertaService {
     private final OfertaRepository repository;
     private final OfertaMapper mapper;
     private final ProductoService productoService;
+    private final Clock clock = Clock.systemDefaultZone();
+
     @PersistenceContext
     private EntityManager entityManager;
+
 
     @Transactional
     public OfertaResponseDTO createOferta(OfertaCreateRequestDTO request) {
@@ -49,13 +53,12 @@ public class OfertaService {
                 ProductoEntity productoActual =
                         productoService.getEntityById(producto.getId());
 
-                // Si tiene oferta asociada
                 if (productoActual.getOferta() != null) {
 
                     OfertaEntity ofertaActual =
                             productoActual.getOferta();
 
-                    // Si la oferta sigue activa -> error
+                    // Si la oferta sigue activa, no permitimos asignar otra
                     if (isOfferActive(ofertaActual)) {
                         throw new ProductAlreadyHasOfferException(
                                 "El producto con ID "
@@ -64,12 +67,17 @@ public class OfertaService {
                         );
                     }
 
-                    // Si la oferta venció -> la desasociamos
+                    // Si la oferta venció, la desasociamos
                     productoActual.setOferta(null);
+
+                    // IMPORTANTE: guardar el producto porque es el dueño de la relación
+                    productoService.save(productoActual);
 
                     if (ofertaActual.getProductos() != null) {
                         ofertaActual.getProductos().remove(productoActual);
                     }
+
+                    repository.save(ofertaActual);
                 }
             }
 
@@ -81,6 +89,9 @@ public class OfertaService {
 
         return mapper.toResponse(savedOferta);
     }
+
+
+
 
     public OfertaEntity getEntityById(Long id) {
         Optional<OfertaEntity> entity = repository.findById(id);
@@ -297,37 +308,35 @@ public class OfertaService {
         return mapper.toResponse(repository.save(oferta));
     }
 
+
     private boolean isOfferActive(OfertaEntity oferta) {
-        LocalDate hoy = LocalDate.now();
+
+        LocalDate hoy = LocalDate.now(clock);
 
         return !hoy.isBefore(oferta.getFechaInicio()) &&
                 !hoy.isAfter(oferta.getFechaFin());
     }
+
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     public void cleanExpiredOffers() {
 
-        List<OfertaEntity> ofertas = repository.findAll();
+        List<OfertaEntity> ofertas = repository.findExpiredOffers();
 
         for (OfertaEntity oferta : ofertas) {
 
-            if (!isOfferActive(oferta)) {
-
-                if (oferta.getProductos() != null) {
-
-                    for (ProductoEntity producto : oferta.getProductos()) {
-                        producto.setOferta(null);
-                        productoService.save(producto);
-                    }
-
-                    oferta.getProductos().clear();
-                    repository.save(oferta);
-                }
+            for (ProductoEntity producto : oferta.getProductos()) {
+                producto.setOferta(null);
+                productoService.save(producto);
             }
+
+            oferta.getProductos().clear();
+            repository.delete(oferta);
         }
 
+
         repository.flush();
+        entityManager.flush();
         entityManager.clear();
     }
-
 }
