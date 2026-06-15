@@ -20,13 +20,5 @@ public class ProductoController {
         return ResponseEntity.ok(service.getAll());
     }
 
-    @PatchMapping("/{productoId}/oferta/{ofertaId}")
-    public ResponseEntity<ProductoResponseDTO> asignarOferta(
-            @PathVariable Long productoId,
-            @PathVariable Long ofertaId) {
 
-        return ResponseEntity.ok(
-                service.asignarOferta(productoId, ofertaId)
-        );
-    }
 }

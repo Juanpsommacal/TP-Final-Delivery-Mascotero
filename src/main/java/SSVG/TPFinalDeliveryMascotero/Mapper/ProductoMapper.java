@@ -12,14 +12,7 @@ import java.math.BigDecimal;
 @Mapper(componentModel = "spring")
 public interface ProductoMapper {
 
-    @Mapping(
-            target = "tipoProducto",
-            expression = "java(getTipoProducto(entity))"
-    )
-    @Mapping(
-            target = "precioFinalConDesc",
-            expression = "java(calcularPrecioFinal(entity))"
-    )
+
     ProductoResponseDTO toResponse(ProductoEntity entity);
 
     default String getTipoProducto(ProductoEntity entity) {
@@ -36,26 +29,5 @@ public interface ProductoMapper {
     }
 
 
-    default Double calcularPrecioFinal(ProductoEntity entity) {
 
-        if (entity.getPrecio() == null) {
-            return 0.0;
-        }
-
-        BigDecimal precio = entity.getPrecio();
-
-        if (entity.getOferta() == null || entity.getOferta().getPorcentaje() == null) {
-            return precio.doubleValue();
-        }
-
-        BigDecimal porcentaje = BigDecimal.valueOf(entity.getOferta().getPorcentaje());
-
-        BigDecimal descuento = precio
-                .multiply(porcentaje)
-                .divide(BigDecimal.valueOf(100));
-
-        BigDecimal resultado = precio.subtract(descuento);
-
-        return resultado.doubleValue();
-    }
 }
