@@ -2,9 +2,9 @@ package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pago;
 
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.MetodoPago;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.UnidadMedida;
+import SSVG.TPFinalDeliveryMascotero.Validations.ValidEnum;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,8 +27,7 @@ public class PagoCreateRequestDTO {
     private BigDecimal monto;
 
     @NotNull(message = "El metodo de pago no puede estar vacio")
+    @ValidEnum(enumClass = MetodoPago.class, message = "El metodo de pago debe ser EFECTIVO, LINK_DE_PAGO, TRASNFERENCIA")
     private MetodoPago metodoPago;
-
-
 
 }

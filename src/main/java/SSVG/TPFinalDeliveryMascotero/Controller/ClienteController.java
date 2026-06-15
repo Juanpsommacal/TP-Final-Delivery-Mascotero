@@ -2,6 +2,7 @@ package SSVG.TPFinalDeliveryMascotero.Controller;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteUpdateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.ClienteService;
 import jakarta.validation.Valid;
@@ -25,6 +26,12 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/{clienteId}/direcciones")
+    public ResponseEntity<ClienteResponseDTO> associateDireccion(@PathVariable Long clienteId,
+                                                                 @Valid @RequestBody DireccionCreateRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.associateDireccion(clienteId, request));
+    }
+
     @GetMapping
     public ResponseEntity<List<ClienteResponseDTO>> getAll(){
         return ResponseEntity.ok(service.getAll());
@@ -38,12 +45,6 @@ public class ClienteController {
     @PatchMapping("/{id}")
     public ResponseEntity<ClienteResponseDTO> updateCliente(@Valid @RequestBody ClienteUpdateRequestDTO request, @PathVariable Long id){
         return ResponseEntity.ok(service.updateCliente(request, id));
-    }
-
-    @PatchMapping("/{clienteId}/direcciones/{direccionId}")
-    public ResponseEntity<ClienteResponseDTO> associateDireccion(@PathVariable Long clienteId,
-                                                                 @PathVariable Long direccionId) {
-        return ResponseEntity.ok(service.associateDireccion(clienteId, direccionId));
     }
 
     @DeleteMapping("/{clienteId}/direcciones/{direccionId}")

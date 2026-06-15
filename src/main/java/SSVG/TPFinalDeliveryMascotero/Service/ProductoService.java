@@ -29,7 +29,7 @@ public class ProductoService {
         Optional<ProductoEntity> producto = repository.findById(id);
         if (producto.isPresent())
             return producto.get();
-        else throw new ResourceNotFoundException("El producto no existe");
+        else throw new ResourceNotFoundException("El producto con la ID: " + id + " no existe");
     }
 
     public void saveEntity(ProductoEntity entity){

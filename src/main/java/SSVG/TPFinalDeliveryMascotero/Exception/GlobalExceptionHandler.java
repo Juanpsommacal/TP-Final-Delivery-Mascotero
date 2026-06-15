@@ -159,11 +159,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<ErrorResponseDTO> handleInsufficientStockException(InsufficientStockException ex){
 
+
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.name(),
-                ex.getMessage()
+                ex.getMessage(),
+                ex.getErrorsMap()
         );
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
