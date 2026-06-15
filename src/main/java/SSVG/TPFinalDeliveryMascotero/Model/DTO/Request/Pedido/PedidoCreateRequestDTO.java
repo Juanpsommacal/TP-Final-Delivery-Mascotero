@@ -31,6 +31,4 @@ public class PedidoCreateRequestDTO {
     @NotEmpty(message = "El detalle del pedido no puede estar vacio")
     @Valid
     private List<DetallePedidoCreateRequestDTO> detalles;
-
-
 }

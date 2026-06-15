@@ -8,6 +8,7 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pago.PagoCreateRequestDTO
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PagoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.MetodoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.PagoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.PedidoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.PagoRepository;
@@ -54,15 +55,15 @@ public class PagoService {
 
         // Creo el Pago y le cargo todos los datos correspondientes
         PagoEntity newPago = new PagoEntity();
+
         newPago.setPedido(pedido);
         newPago.setMonto(request.getMonto());
         newPago.setFecha(LocalDateTime.now());
-        newPago.setMetodoPago(request.getMetodoPago());
+        newPago.setMetodoPago(MetodoPago.valueOf(request.getMetodoPago().toUpperCase()));
 
         PagoEntity savedPago = repository.save(newPago);
 
         // Le agrego al Pedido el registro del Pago
-        //pedido.setId(request.getPedidoId());
         pedido.getPagos().add(savedPago);
 
         // Defino y actualizo el Estado del Pago (DEUDA_PARCIAL o PAGADO)
