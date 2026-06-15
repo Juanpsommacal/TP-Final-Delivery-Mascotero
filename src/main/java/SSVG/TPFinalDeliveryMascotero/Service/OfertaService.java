@@ -6,12 +6,14 @@ import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.OfertaMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Oferta.OfertaCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.OfertaResponseDTO;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.OfertaEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.OfertaRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,6 +28,8 @@ public class OfertaService {
     private final OfertaRepository repository;
     private final OfertaMapper mapper;
     private final ProductoService productoService;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional
     public OfertaResponseDTO createOferta(OfertaCreateRequestDTO request) {
@@ -59,6 +63,7 @@ public class OfertaService {
 
     public List<OfertaResponseDTO> getAll() {
         return repository.findAll().stream()
+                .filter(this::isOfferActive)
                 .map(mapper::toResponse)
                 .toList();
     }
@@ -260,6 +265,37 @@ public class OfertaService {
         return mapper.toResponse(repository.save(oferta));
     }
 
+    private boolean isOfferActive(OfertaEntity oferta) {
+        LocalDate hoy = LocalDate.now();
 
+        return !hoy.isBefore(oferta.getFechaInicio()) &&
+                !hoy.isAfter(oferta.getFechaFin());
+    }
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    public void cleanExpiredOffers() {
+
+        List<OfertaEntity> ofertas = repository.findAll();
+
+        for (OfertaEntity oferta : ofertas) {
+
+            if (!isOfferActive(oferta)) {
+
+                if (oferta.getProductos() != null) {
+
+                    for (ProductoEntity producto : oferta.getProductos()) {
+                        producto.setOferta(null);
+                        productoService.save(producto);
+                    }
+
+                    oferta.getProductos().clear();
+                    repository.save(oferta);
+                }
+            }
+        }
+
+        repository.flush();
+        entityManager.clear();
+    }
 
 }

@@ -28,7 +28,9 @@ public class ProductoService {
         return repository.findAll().stream()
                 .toList();
     }
-
+    public ProductoEntity save(ProductoEntity entity){
+        return repository.save(entity);
+    }
 
     public ProductoEntity getEntityById(Long id){
         Optional<ProductoEntity> producto = repository.findById(id);
