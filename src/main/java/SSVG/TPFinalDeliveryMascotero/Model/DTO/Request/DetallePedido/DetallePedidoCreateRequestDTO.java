@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.DetallePedido;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,7 @@ public class DetallePedidoCreateRequestDTO {
 
     @NotNull(message = "La cantidad no puede estar vacia")
     @Positive(message = "La cantidad debe ser un valor positivo")
+    @Digits(integer = 2, fraction = 0, message = "La cantidad no puede tener mas de 2 digitos")
     private Integer cantidad;
 
 }

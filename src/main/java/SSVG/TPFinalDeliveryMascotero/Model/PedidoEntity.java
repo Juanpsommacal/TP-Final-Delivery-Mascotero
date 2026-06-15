@@ -33,18 +33,19 @@ public class PedidoEntity {
     private LocalDate fecha;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private EstadoPedido estadoPedido;
 
     @Column(nullable = false)
     private BigDecimal montoTotal;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private EstadoPago estadoPago;
 
-    @ManyToOne
-    @JoinColumn(name = "direccion_id")
-    private DireccionEntity direccion;
+    @Column(nullable = false)
+    private String direccionCompleta;
+
+    private String pisoDepto;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedidoEntity> productos = new ArrayList<>();

@@ -1,21 +1,23 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ClienteMapper;
+import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteUpdateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.ClienteRepository;
-import SSVG.TPFinalDeliveryMascotero.Repository.DireccionRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -24,6 +26,7 @@ public class ClienteService {
 
     private final ClienteRepository repository;
     private final DireccionService direccionService;
+    private final DireccionMapper direccionMapper;
     private final ClienteMapper mapper;
 
     public ClienteResponseDTO createCliente(ClienteCreateRequestDTO request){
@@ -35,7 +38,7 @@ public class ClienteService {
         Optional<ClienteEntity> entity = repository.findById(id);
         if (entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("El cliente no existe");
+        else throw new ResourceNotFoundException("El cliente con la ID: " + id + " no existe");
     }
 
     public ClienteResponseDTO getDTOById(Long id){
@@ -71,17 +74,16 @@ public class ClienteService {
         return mapper.toResponse(repository.save(entity));
     }
 
-    // Asociar una direccion a un Cliente
-    public ClienteResponseDTO associateDireccion(Long clienteId, Long direccionId) {
+    // Crea y Asocia una direccion a un Cliente
+    @Transactional
+    public ClienteResponseDTO associateDireccion(Long clienteId, DireccionCreateRequestDTO request){
+
         ClienteEntity cliente = getEntityById(clienteId);
-
-        DireccionEntity direccion = direccionService.getEntityById(direccionId);
-
-        if (isAssociated(cliente, direccionId)) {
-            throw new ResourceAlreadyAssociatedException("La direccion ya esta asociada al cliente");
-        }
+        DireccionEntity direccion = direccionMapper.toEntity(request);
 
         cliente.getDirecciones().add(direccion);
+        direccion.getClientes().add(cliente);
+        direccionService.saveEntity(direccion);
 
         return mapper.toResponse(repository.save(cliente));
     }
@@ -108,6 +110,16 @@ public class ClienteService {
         // "anyMatch" devuelve un boolean, y sirve para saber si en la lista de direcciones ya existe una con ese ID
         return cliente.getDirecciones().stream()
                 .anyMatch(d -> d.getId().equals(direccionId));
+    }
+
+    public boolean hasDireccion(ClienteEntity cliente, DireccionEntity direccionParam){
+        return cliente.getDirecciones().stream()
+                .anyMatch(direccionCliente ->
+                        direccionCliente.getCalle().equalsIgnoreCase(direccionParam.getCalle())
+                                && direccionCliente.getNumero().equals(direccionParam.getNumero())
+                                && Objects.equals(direccionCliente.getPiso(), direccionParam.getPiso())
+                                && Objects.equals(direccionCliente.getDepartamento(), direccionParam.getDepartamento())
+                );
     }
 
 }
