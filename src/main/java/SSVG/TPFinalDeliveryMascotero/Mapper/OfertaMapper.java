@@ -19,8 +19,6 @@ public interface OfertaMapper {
     @Mapping(target = "productos", expression = "java(mapProductos(entity))")
     OfertaResponseDTO toResponse(OfertaEntity entity);
 
-    List<OfertaResponseDTO> toResponseDTOList(List<OfertaEntity> ofertas);
-
     default List<ProductoOfertaResponseDTO> mapProductos(OfertaEntity entity){
         if (entity.getProductos() == null){
             return List.of();

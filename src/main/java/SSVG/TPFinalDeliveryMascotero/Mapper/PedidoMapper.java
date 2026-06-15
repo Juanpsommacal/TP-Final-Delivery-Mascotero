@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring",
-        uses = {DetallePedidoMapper.class, DireccionMapper.class})
+        uses = {DetallePedidoMapper.class, DireccionMapper.class, PagoMapper.class})
 public interface PedidoMapper {
 
     public PedidoEntity toEntity(PedidoCreateRequestDTO request);

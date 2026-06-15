@@ -39,6 +39,7 @@ public class PedidoEntity {
     @Column(nullable = false)
     private BigDecimal montoTotal;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoPago estadoPago;
 

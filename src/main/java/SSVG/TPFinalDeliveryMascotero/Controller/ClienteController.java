@@ -42,7 +42,7 @@ public class ClienteController {
 
     @PatchMapping("/{clienteId}/direcciones/{direccionId}")
     public ResponseEntity<ClienteResponseDTO> associateDireccion(@PathVariable Long clienteId,
-                                                               @PathVariable Long direccionId) {
+                                                                 @PathVariable Long direccionId) {
         return ResponseEntity.ok(service.associateDireccion(clienteId, direccionId));
     }
 

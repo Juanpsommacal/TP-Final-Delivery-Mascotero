@@ -19,7 +19,7 @@ public class OfertaController {
     private final OfertaService service;
 
     @PostMapping
-    public ResponseEntity<OfertaResponseDTO> create(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
+    public ResponseEntity<OfertaResponseDTO> createOferta(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
         OfertaResponseDTO response = service.createOferta(requestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -35,14 +35,13 @@ public class OfertaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<OfertaResponseDTO> updateOferta(@PathVariable Long id,
-                                                          @RequestBody OfertaCreateRequestDTO request)
-    {
+    public ResponseEntity<OfertaResponseDTO> updateOferta(@Valid @RequestBody OfertaCreateRequestDTO request,
+                                                          @PathVariable Long id) {
         return ResponseEntity.ok(service.updateOferta(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOferta(@PathVariable Long id) {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
