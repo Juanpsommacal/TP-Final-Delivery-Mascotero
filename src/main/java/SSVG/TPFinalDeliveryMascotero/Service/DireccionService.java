@@ -79,6 +79,11 @@ public class DireccionService {
 
     }
 
+    public void deleteDireccion(Long id){
+        DireccionEntity entity = getEntityById(id);
+        repository.delete(entity);
+    }
+
 
     ///----- Validations -----
 

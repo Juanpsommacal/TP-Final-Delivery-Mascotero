@@ -19,11 +19,12 @@ public class DireccionController {
 
     private final DireccionService service;
 
-    @PostMapping
-    public ResponseEntity<DireccionResponseDTO> createDireccion(@Valid @RequestBody DireccionCreateRequestDTO request){
-        DireccionResponseDTO response = service.createDireccion(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+    ///Este no va mas, se crea direccion desde Cliente
+//    @PostMapping
+//    public ResponseEntity<DireccionResponseDTO> createDireccion(@Valid @RequestBody DireccionCreateRequestDTO request){
+//        DireccionResponseDTO response = service.createDireccion(request);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+//    }
 
     @GetMapping
     public ResponseEntity<List<DireccionResponseDTO>> getAll(){

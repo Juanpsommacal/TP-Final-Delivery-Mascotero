@@ -12,6 +12,7 @@ import SSVG.TPFinalDeliveryMascotero.Repository.OfertaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.internal.constraintvalidators.bv.time.pastorpresent.PastOrPresentValidatorForOffsetTime;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -29,20 +30,30 @@ public class OfertaService {
     @Transactional
     public OfertaResponseDTO createOferta(OfertaCreateRequestDTO request) {
 
+        //Validamos que la fecha de FIN de la oferta no sea antes que la de inicio
         validateDates(request.getFechaInicio(), request.getFechaFin());
 
+        //Creamos la nueva oferta y le pasamos los datos del RequestDTO
         OfertaEntity newOferta = mapper.toEntity(request);
 
-        if (request.getProductosIds() != null && !request.getProductosIds().isEmpty()){
-            List<ProductoEntity> productos = getValidProducts(request.getProductosIds());
+        //Buscamos todos los productos que hay en el request
+        List<ProductoEntity> productos = (request.getProductosIds().stream().
+                map(productoService::getEntityById)
+                .toList());
 
-            associateProductsToOffer(productos, newOferta);
-            newOferta.setProductos(productos);
-        }
+        //Guardamos esos productos en la oferta
+        newOferta.setProductos(productos);
 
+        //Guardamos la oferta en el repo
         OfertaEntity savedOferta = repository.save(newOferta);
 
-        return mapper.toResponse(repository.save(savedOferta));
+        //Hacemos la relacion inversa. A cada producto le asignamos la oferta
+        productos.forEach(producto-> producto.setOferta(newOferta));
+
+        //Guardamos los productos en el repo
+        productos.forEach(productoService::saveEntity);
+
+        return mapper.toResponse(savedOferta);
     }
 
     public OfertaEntity getEntityById(Long id) {
@@ -62,27 +73,8 @@ public class OfertaService {
                 .toList();
     }
 
-    @Transactional
-    public OfertaResponseDTO updateOferta(Long id, OfertaCreateRequestDTO request) {
-        OfertaEntity oferta = getEntityById(id);
-
-        validateDates(request.getFechaInicio(), request.getFechaFin());
-
-        oferta.setNombre(request.getNombre());
-        oferta.setDescripcion(request.getDescripcion());
-        oferta.setPorcentaje(request.getPorcentaje());
-        oferta.setFechaInicio(request.getFechaInicio());
-        oferta.setFechaFin(request.getFechaFin());
-
-        clearProductsFromOffer(oferta);
-
-        List<ProductoEntity> productos = getValidProducts(request.getProductosIds());
-        associateProductsToOffer(productos, oferta);
-
-        oferta.setProductos(productos);
-
-        return mapper.toResponse(repository.save(oferta));
-    }
+   // @Transactional
+   // public OfertaResponseDTO updateOferta(Long id, OfertaCreateRequestDTO request) {    }
 
     public void deleteById(Long id) {
         OfertaEntity oferta = getEntityById(id);
@@ -96,46 +88,9 @@ public class OfertaService {
 
     private void validateDates(LocalDate inicio, LocalDate fin) {
 
-        LocalDate hoy = LocalDate.now();
-
-        if (inicio == null || fin == null) {
-            return;
-        }
-
-        if (inicio.isBefore(hoy)) {
-            throw new IllegalArgumentException("La fecha de inicio de la oferta no puede ser anterior a la fecha actual");
-        }
-
-        if (fin.isBefore(hoy)) {
-            throw new IllegalArgumentException("La fecha de fin de la oferta no puede ser anterior a la fecha actual");
-        }
-
         if (fin.isBefore(inicio)) {
-            throw new IllegalArgumentException("La fecha de fin no puede ser antes de la fecha de inicio de la oferta");
+            throw new InvalidDateRangeException("La fecha de fin de la oferta no puede ser antes de la fecha de inicio");
         }
-    }
-
-    // Se realizan dos validaciones para utilizar en la creacion y actualizacion de ofertas
-    private ProductoEntity getValidProduct(Long id) {
-        ProductoEntity producto = productoService.getEntityById(id);
-
-        if (producto.getActivo() == false){
-            throw new InactiveResourceException("El producto con el ID: "+ id +" esta dado de baja");
-        }
-        return producto;
-    }
-
-    // Este metodo Recibe una lista SOLO de IDs y te devuelve
-    // una lista con los Productos completos (La entidad)
-    private List<ProductoEntity> getValidProducts(List<Long> productosIds){
-        return productosIds.stream()
-                .map(this::getValidProduct)
-                .toList();
-    }
-
-    // En este metodo se recorren todos los productos y se les asigna/asocia la oferta
-    private void associateProductsToOffer(List<ProductoEntity> productos, OfertaEntity oferta){
-        productos.forEach(producto -> producto.setOferta(oferta));
     }
 
     // Se hacer la desasociacion de una Oferta y sus productos, para utilizar
