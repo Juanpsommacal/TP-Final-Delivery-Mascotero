@@ -125,7 +125,8 @@ public class PedidoService {
                     DetallePedidoEntity newDetalle = new DetallePedidoEntity();
                     newDetalle.setCantidad(requestDetalle.getCantidad());
                     newDetalle.setPrecioUnitario(producto.getPrecio());
-                    ///ACA IRIA LA LOGICA PARA VER SI TIENE OFERTA EL PRODUCTO
+                    if(producto.getOferta() != null)
+                        newDetalle.setDescuentoAplicado(producto.getOferta().getPorcentaje());
                     newDetalle.setPedido(savedPedido);
                     newDetalle.setProducto(producto);
                     return newDetalle;

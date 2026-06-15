@@ -34,11 +34,11 @@ public class OfertaController {
         return ResponseEntity.ok(service.getDTOById(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<OfertaResponseDTO> updateOferta(@Valid @RequestBody OfertaCreateRequestDTO request,
-                                                          @PathVariable Long id) {
-        return ResponseEntity.ok(service.updateOferta(id, request));
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<OfertaResponseDTO> updateOferta(@Valid @RequestBody OfertaCreateRequestDTO request,
+//                                                          @PathVariable Long id) {
+//        return ResponseEntity.ok(service.updateOferta(id, request));
+//    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOferta(@PathVariable Long id) {
