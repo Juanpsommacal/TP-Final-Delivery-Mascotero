@@ -1,9 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Oferta;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.*;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 public class OfertaCreateRequestDTO {
+
     @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
 
@@ -29,9 +27,11 @@ public class OfertaCreateRequestDTO {
     private Double porcentaje;
 
     @NotNull(message = "La fecha de inicio es obligatoria")
+    @FutureOrPresent(message = "La fecha de inicio no puede ser una fecha anterior a la actual")
     private LocalDate fechaInicio;
 
     @NotNull(message = "La fecha de fin es obligatoria")
+    @FutureOrPresent(message = "La fecha de fin no puede ser una fecha anterior a la de inicio")
     private LocalDate fechaFin;
 
     // Lista de IDs de productos asociados

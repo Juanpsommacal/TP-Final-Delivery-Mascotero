@@ -14,8 +14,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ClienteUpdateRequestDTO {
 
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras y espacios")
     private String nombre;
 
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras y espacios")
     private String apellido;
 
     @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "El número de teléfono no es válido")

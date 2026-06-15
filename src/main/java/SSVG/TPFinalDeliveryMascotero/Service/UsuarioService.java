@@ -26,6 +26,7 @@ public class UsuarioService {
         RoleEntity roleEntity = roleService.findByRoleName(RoleType.USER);
         UsuarioEntity usuario = usuarioMapper.toEntity(dto);
         usuario.setRole(roleEntity);
+        usuario.setActive(true);
         usuario.setPassword(passwordEncoded.encode(dto.getPassword()));
         return usuarioMapper.toResponse(usuarioRepository.save(usuario));
     }

@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,22 +21,26 @@ public class DireccionController {
     private final DireccionService service;
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<DireccionResponseDTO> createDireccion(@Valid @RequestBody DireccionCreateRequestDTO request){
         DireccionResponseDTO response = service.createDireccion(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<DireccionResponseDTO>> getAll(){
         return ResponseEntity.ok(service.getAll());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<DireccionResponseDTO> getById(@PathVariable Long id){
         return ResponseEntity.ok(service.getDTOById(id));
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<DireccionResponseDTO> updateDireccion(@Valid @RequestBody DireccionUpdateRequestDTO request, @PathVariable Long id){
         return ResponseEntity.ok(service.updateDireccion(request,id));
     }

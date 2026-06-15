@@ -34,21 +34,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Obtiene el header Authorization de la request
         final String authHeader = request.getHeader("Authorization");
+        String requestURI = request.getRequestURI();
 
-        // Si no hay Bearer token, se continúa la cadena de filtros.
-        // La request podrá seguir siendo procesada como pública o será
-        // rechazada más adelante por Spring Security si el endpoint requiere autenticación.
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (requestURI.contains("/api/auth") || requestURI.startsWith("/swagger-ui") || requestURI.startsWith("/v3/api-docs") ) {
             filterChain.doFilter(request, response);
+            return;
+        }
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+            writeUnauthorizedResponse(response,"Se  necesita token para continuar");
             return;
         }
         final String jwt = authHeader.substring(7);
         final String username;
         try {
-            // Extrae el username desde el token.
-            // Si el token expiró o es inválido se devuelve 401.
             username = jwtService.extractUsername(jwt);
         } catch (ExpiredJwtException e) {
             writeUnauthorizedResponse(
@@ -62,83 +62,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Obtiene la autenticación actual del contexto de seguridad.
-        // Si ya existe una autenticación, significa que otro filtro
-        // autenticó previamente al usuario.
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
-        System.out.println("las auto " + authentication);
-        // Solo se autentica al usuario si:
-        // 1. El token contiene un username válido
-        // 2. No existe una autenticación previa
         if (username != null && authentication == null) {
-
             try {
-
-                // Se obtiene el usuario desde la base de datos para validar:
-                // - que el usuario siga existiendo
-                // - que su información esté actualizada
-                // - y recuperar sus authorities/roles
                 UserDetails userDetails =
                         userDetailsService.loadUserByUsername(username);
-
-                // Verifica que el token sea válido para este usuario:
-                // - firma correcta
-                // - no expirado
-                // - username del token coincide con el usuario cargado
                 if (!jwtService.isTokenValid(jwt, userDetails)) {
                     writeUnauthorizedResponse(response, "Token inválido.");
                     return;
                 }
-
-                // Creamos una autenticación ya validada.
-                // En este punto no usamos password porque el token ya fue verificado.
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
-
-                // Agrega detalles de la request actual
-                // (IP, sesión, etc.)
                 authToken.setDetails(
                         new WebAuthenticationDetailsSource()
                                 .buildDetails(request)
                 );
-
-                // Registra la autenticación en el contexto de seguridad
                 SecurityContextHolder
                         .getContext()
                         .setAuthentication(authToken);
-                System.out.println(
-                        "DESPUES: "
-                                + SecurityContextHolder
-                                .getContext()
-                                .getAuthentication()
-                );
-
             } catch (Exception e) {
                 e.printStackTrace();
               writeUnauthorizedResponse(response, "Token inválido.");
                 return;
             }
         }
-
-        // Continúa la ejecución de la cadena de filtros
         filterChain.doFilter(request, response);
     }
 
-    // Construye manualmente una respuesta HTTP 401 Unauthorized
-    // para devolver un error consistente en formato JSON.
-    //
-    // Se utiliza dentro del filtro porque en esta etapa todavía
-    // no interviene el manejo global de excepciones de Spring
-    // (@RestControllerAdvice / ExceptionHandler).
     private void writeUnauthorizedResponse(HttpServletResponse response,
                                            String message) throws IOException {
 
-        // Código HTTP 401 Unauthorized
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

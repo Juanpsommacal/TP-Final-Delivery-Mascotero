@@ -14,9 +14,11 @@ import lombok.Setter;
 public class ClienteCreateRequestDTO {
 
     @NotBlank(message = "El nombre del cliente no puede estar vacio")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras y espacios")
     private String nombre;
 
     @NotBlank(message = "El apellido del cliente no puede estar vacio")
+    @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El apellido solo puede contener letras y espacios")
     private String apellido;
 
     @NotBlank(message = "El telefono no puede estar vacio")

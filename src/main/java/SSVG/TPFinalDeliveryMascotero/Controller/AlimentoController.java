@@ -33,9 +33,6 @@ public class AlimentoController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<AlimentoResponseDTO>> getAll(){
-        Authentication auth =
-                SecurityContextHolder.getContext().getAuthentication();
-        System.out.println("............" + auth);
         return ResponseEntity.ok(service.getAll());
     }
 

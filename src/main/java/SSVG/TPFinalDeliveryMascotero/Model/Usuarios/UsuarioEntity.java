@@ -17,6 +17,9 @@ public class UsuarioEntity {
     private Long id;
 
     @Column(nullable = false)
+    private boolean isActive;
+
+    @Column(nullable = false)
     private String nombre;
 
     @Column(nullable = false)

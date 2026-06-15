@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Security;
 
+import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Model.Usuarios.UsuarioEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.UsuarioRepository;
@@ -21,6 +22,7 @@ public class UserDetailsServiceImpl  implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         System.out.println("llefaaaaaaaa");
         UsuarioEntity userEntity = usuarioRepository.findByEmail(username).orElseThrow(()->new UsernameNotFoundException("El usuario: no existe"));
+        if(!userEntity.isActive()) throw new InactiveResourceException("el usuario no esta activo");
         String completeRole = "ROLE_".concat(userEntity.getRole().getRoleName().name());
        SimpleGrantedAuthority authorities = new SimpleGrantedAuthority(completeRole);
         System.out.println("auto" + authorities);

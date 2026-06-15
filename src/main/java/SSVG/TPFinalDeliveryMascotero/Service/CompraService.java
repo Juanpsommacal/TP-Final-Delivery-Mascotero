@@ -94,7 +94,7 @@ public class CompraService {
         Optional<CompraEntity> entity = repository.findById(id);
         if(entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("La compra no existe");
+        else throw new ResourceNotFoundException("La compra con la ID: " + id + " no existe");
     }
 
     public CompraResponseDTO getDTOById(Long id){
