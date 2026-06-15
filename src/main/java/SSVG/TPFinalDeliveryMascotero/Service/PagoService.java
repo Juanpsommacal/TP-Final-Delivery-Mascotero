@@ -59,7 +59,7 @@ public class PagoService {
         newPago.setPedido(pedido);
         newPago.setMonto(request.getMonto());
         newPago.setFecha(LocalDateTime.now());
-        newPago.setMetodoPago(MetodoPago.valueOf(request.getMetodoPago().toUpperCase()));
+        newPago.setMetodoPago(MetodoPago.valueOf(request.getMetodoPago().trim().toUpperCase()));
 
         PagoEntity savedPago = repository.save(newPago);
 
@@ -89,9 +89,6 @@ public class PagoService {
     }
 
     public List<PagoResponseDTO> listPagosByClienteId(Long clienteId){
-        if (clienteId == null || clienteId <= 0){
-            throw new ResourceNotFoundException("El ID del Cliente debe ser un numero mayor a 0");
-        }
         clienteService.getEntityById(clienteId);
         return repository.findByPedido_Cliente_Id(clienteId).stream()
                 .map(mapper::toResponse)
