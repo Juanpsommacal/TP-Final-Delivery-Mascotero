@@ -2,6 +2,7 @@ package SSVG.TPFinalDeliveryMascotero.Exception;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,8 +10,10 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,6 +22,9 @@ import java.util.*;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+
+    ///----- Manejadores de excepciones de Java
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleMethodNotValidException(MethodArgumentNotValidException ex){
@@ -41,6 +47,75 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDTO> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex){
+
+        String tipoEsperado = ex.getRequiredType() != null
+                ? ex.getRequiredType().getSimpleName()
+                : "desconocido";
+
+        String message =
+                "El parámetro "
+                        + ex.getName()
+                        + " debe ser de tipo "
+                        + tipoEsperado;
+
+        ErrorResponseDTO errorResponse =
+                new ErrorResponseDTO(
+                        LocalDateTime.now(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        HttpStatus.BAD_REQUEST.name(),
+                        message
+                );
+
+        return ResponseEntity.badRequest()
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConstraintViolationException(ConstraintViolationException ex){
+
+        Map<String, List<String>> errorsMap = new HashMap<>();
+
+        ex.getConstraintViolations().forEach(error -> {
+            String field = error.getPropertyPath().toString();
+            String cleanField = field.substring(field.lastIndexOf(".") + 1);
+
+            errorsMap.computeIfAbsent(cleanField, key -> new ArrayList<>())
+                    .add(error.getMessage());
+        });
+
+        ErrorResponseDTO errorResponse =
+                new ErrorResponseDTO(
+                        LocalDateTime.now(),
+                        HttpStatus.BAD_REQUEST.value(),
+                        HttpStatus.BAD_REQUEST.name(),
+                        "Error de validacion en los datos enviados",
+                        errorsMap
+                );
+
+        return ResponseEntity.badRequest()
+                .body(errorResponse);
+
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponseDTO> handleMissingServletRequestParameter(
+            MissingServletRequestParameterException ex
+    ) {
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.name(),
+                "Falta el parámetro requerido: " + ex.getParameterName()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorResponse);
+    }
+
+    /// Manejadores de excepciones custom
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleResourceNotFoundException(ResourceNotFoundException ex){
 

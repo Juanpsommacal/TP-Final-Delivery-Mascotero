@@ -1,0 +1,32 @@
+package SSVG.TPFinalDeliveryMascotero.Service;
+
+import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@RequiredArgsConstructor
+@Service
+public class ReportesService {
+
+    private final PedidoService pedidoService;
+    private final PedidoMapper pedidoMapper;
+
+    public List<PedidoResponseDTO> getPedidosByDireccion(String calle, Integer numero){
+        return pedidoService.getPedidosByDireccion(calle, numero)
+                .stream()
+                .map(pedidoMapper::toResponse)
+                .toList();
+    }
+
+    public List<PedidoResponseDTO> getPedidosByFecha(LocalDate fecha){
+        return pedidoService.getPedidosByFecha(fecha)
+                .stream()
+                .map(pedidoMapper::toResponse)
+                .toList();
+    }
+
+}

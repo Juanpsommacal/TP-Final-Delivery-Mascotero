@@ -86,7 +86,8 @@ public class PedidoService {
         newPedido.setFecha(LocalDate.now());
         newPedido.setEstadoPedido(EstadoPedido.PENDIENTE);
         newPedido.setEstadoPago(EstadoPago.PENDIENTE);
-        newPedido.setDireccionCompleta(formatearDireccionCompleta(direccionRequest));
+        newPedido.setCalle(direccionRequest.getCalle());
+        newPedido.setNumero(direccionRequest.getNumero());
         newPedido.setPisoDepto(formatearPisoDepto(direccionRequest));
 
         //Creamos la lista de detallePedidoEntity para obtener los precios con descuentos
@@ -193,10 +194,6 @@ public class PedidoService {
 
     /// ----- Formateo -----
 
-    private String formatearDireccionCompleta(DireccionEntity direccion) {
-        return direccion.getCalle() + " " + direccion.getNumero();
-    }
-
     private String formatearPisoDepto(DireccionEntity direccion) {
         if (direccion.getPiso() == null && direccion.getDepartamento() == null) {
             return "Sin especificar";
@@ -215,4 +212,13 @@ public class PedidoService {
     }
 
 
+    /// ----- Busqueda en BDD -----
+
+    public List<PedidoEntity> getPedidosByDireccion(String calle, Integer numero){
+        return repository.findByCalleIgnoreCaseAndNumero(calle, numero);
+    }
+
+    public List<PedidoEntity> getPedidosByFecha(LocalDate fecha){
+        return repository.findByFecha(fecha);
+    }
 }
