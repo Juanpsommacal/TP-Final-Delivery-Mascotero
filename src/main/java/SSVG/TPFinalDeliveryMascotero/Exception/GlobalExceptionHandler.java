@@ -171,6 +171,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
+
+        @ExceptionHandler(ProductAlreadyHasOfferException.class)
+        public ResponseEntity<?> handleProductAlreadyHasOffer(ProductAlreadyHasOfferException ex) {
+
+            Map<String, Object> body = new HashMap<>();
+
+            body.put("error", "PRODUCT_ALREADY_HAS_OFFER");
+            body.put("message", ex.getMessage());
+            body.put("status", HttpStatus.CONFLICT.value());
+            body.put("timestamp", LocalDateTime.now());
+
+            return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+        }
+
+    @ExceptionHandler(EmptyListException.class)
+    public ResponseEntity<String> handleEmptyListException(
+            EmptyListException ex) {
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
     /// Manejador de Exception.class
 
     @ExceptionHandler(Exception.class)
