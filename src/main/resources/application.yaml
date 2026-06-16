@@ -1,13 +1,15 @@
 spring:
-  application:
-    name: TPFinalDeliveryMascotero
-
   datasource:
-    url: jdbc:mysql://localhost:3306/delivery_mascotero
-    username: root
-    password:
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/delivery_mascotero2 #(Server local)
+    #url: jdbc:mysql://172.16.1.64:3306/tallerUtn_nombreAlumno #(Server UTN)
 
+    username: root #(Server Local)
+    #username: bdd1 #(Server UTN)
+
+    password: 1234 #(Server Local)
+    #password: bdd1 #(Server UTN)
+
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,3 +17,4 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
