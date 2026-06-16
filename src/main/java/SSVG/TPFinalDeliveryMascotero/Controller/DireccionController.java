@@ -20,12 +20,12 @@ public class DireccionController {
 
     private final DireccionService service;
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<DireccionResponseDTO> createDireccion(@Valid @RequestBody DireccionCreateRequestDTO request){
-        DireccionResponseDTO response = service.createDireccion(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+    ///Este no va mas, se crea direccion desde Cliente
+//    @PostMapping
+//    public ResponseEntity<DireccionResponseDTO> createDireccion(@Valid @RequestBody DireccionCreateRequestDTO request){
+//        DireccionResponseDTO response = service.createDireccion(request);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+//    }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")

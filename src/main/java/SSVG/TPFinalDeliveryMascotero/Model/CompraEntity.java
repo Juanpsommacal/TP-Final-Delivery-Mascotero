@@ -32,7 +32,7 @@ public class CompraEntity {
     private LocalDate fecha;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private EstadoPedido estado;
 
     @Column(nullable = false)

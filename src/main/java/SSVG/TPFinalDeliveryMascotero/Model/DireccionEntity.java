@@ -20,7 +20,7 @@ public class DireccionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String calle;
 
     @Column(nullable = false)
@@ -28,8 +28,10 @@ public class DireccionEntity {
 
     private Integer piso;
 
+    @Column(length = 10)
     private String departamento;
 
+    @Column(length = 50)
     private String observaciones;
 
     @ManyToMany(mappedBy = "direcciones")

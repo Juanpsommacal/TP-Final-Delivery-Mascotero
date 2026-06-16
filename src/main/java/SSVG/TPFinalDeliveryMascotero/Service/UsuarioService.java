@@ -23,7 +23,7 @@ public class UsuarioService {
 
     public UsuarioResponseDTO createUsuario(UsuarioCreateRequestDTO dto){
         validateUsername(dto.getEmail());
-        RoleEntity roleEntity = roleService.findByRoleName(RoleType.USER);
+        RoleEntity roleEntity = roleService.findByRoleName(RoleType.ADMIN);
         UsuarioEntity usuario = usuarioMapper.toEntity(dto);
         usuario.setRole(roleEntity);
         usuario.setActive(true);

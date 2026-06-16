@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Mapper;
 
+import SSVG.TPFinalDeliveryMascotero.Mapper.Helper.EnumMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.PedidoCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.PedidoEntity;
@@ -7,7 +8,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring",
-        uses = {DetallePedidoMapper.class})
+        uses = {DetallePedidoMapper.class, DireccionMapper.class, PagoMapper.class})
 public interface PedidoMapper {
 
     public PedidoEntity toEntity(PedidoCreateRequestDTO request);

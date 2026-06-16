@@ -101,6 +101,9 @@ public class ClienteService {
         //Recorre las direcciones del cliente y elimina solo si se encuentra el mismo ID que "direccionId"
         cliente.getDirecciones().removeIf(d -> d.getId().equals(direccionId));
 
+        //Tambien borramos la entidad de la BDD asi no queda huerfana
+        direccionService.deleteDireccion(direccionId);
+
         return mapper.toResponse(repository.save(cliente));
     }
 

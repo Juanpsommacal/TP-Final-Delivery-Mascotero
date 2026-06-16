@@ -133,6 +133,33 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(LimitExceededException.class)
+    public ResponseEntity<ErrorResponseDTO> handleLimitExceededException(LimitExceededException ex){
+
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.name(),
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidResourceStateException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidResourceStateException(InvalidResourceStateException ex){
+
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.name(),
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    //Manejador de Exception.class
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<ErrorResponseDTO> handleInsufficientStockException(InsufficientStockException ex){
 
@@ -191,6 +218,27 @@ public class GlobalExceptionHandler {
     }
 
 
+
+        @ExceptionHandler(ProductAlreadyHasOfferException.class)
+        public ResponseEntity<?> handleProductAlreadyHasOffer(ProductAlreadyHasOfferException ex) {
+
+            Map<String, Object> body = new HashMap<>();
+
+            body.put("error", "PRODUCT_ALREADY_HAS_OFFER");
+            body.put("message", ex.getMessage());
+            body.put("status", HttpStatus.CONFLICT.value());
+            body.put("timestamp", LocalDateTime.now());
+
+            return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+        }
+
+    @ExceptionHandler(EmptyListException.class)
+    public ResponseEntity<String> handleEmptyListException(
+            EmptyListException ex) {
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
     /// Manejador de Exception.class
 
     @ExceptionHandler(Exception.class)
@@ -204,7 +252,6 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
                 "Hubo un error interno, por favor intenta mas tarde. Si el problema persiste, contactate con soporte"
-                + ex.toString()
         );
 
         return ResponseEntity

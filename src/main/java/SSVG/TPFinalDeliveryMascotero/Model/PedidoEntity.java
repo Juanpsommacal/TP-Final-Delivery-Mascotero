@@ -33,16 +33,16 @@ public class PedidoEntity {
     private LocalDate fecha;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private EstadoPedido estadoPedido;
 
     @Column(nullable = false)
     private BigDecimal montoTotal;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private EstadoPago estadoPago;
 
-    @Column(nullable = false)
     private String direccionCompleta;
 
     private String pisoDepto;

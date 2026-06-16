@@ -19,8 +19,42 @@ public class OfertaController {
 
     private final OfertaService service;
 
+    // QUITA TODOS LOS PRODUCTOS DE LA OFERTA..
+
+    @DeleteMapping("/{ofertaId}/delete-products")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<OfertaResponseDTO> removeAllProductsFromOffer(
+            @PathVariable Long ofertaId) {
+
+        OfertaResponseDTO response =
+                service.removeAllProductsFromOffer(ofertaId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    //QUITA DE LA OFERTA UN SOLO PRODUCTO
+    @PatchMapping("/{ofertaId}/producto/{productoId}/remove")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<OfertaResponseDTO> removeProductFromOffer(
+            @PathVariable Long ofertaId,
+            @PathVariable Long productoId) {
+        return ResponseEntity.ok(service.removeProductFromOffer(ofertaId, productoId)
+        );
+    }
+
+    // AGREGA TODOS LOS PRODUCTOS A LA OFERTA (Menos los Ya Poseen Una)
+    @PatchMapping("/{ofertaId}/all-products")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<OfertaResponseDTO> associateAllProducts(
+            @PathVariable Long ofertaId) {
+
+        return ResponseEntity.ok(service.associateAllProductsToOffer(ofertaId)
+        );
+    }
+
+    // CREA OFERTA..
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OfertaResponseDTO> create(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
         OfertaResponseDTO response = service.createOferta(requestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -38,12 +72,19 @@ public class OfertaController {
         return ResponseEntity.ok(service.getDTOById(id));
     }
 
+    // GET OFERTAS ACTIVAS
+    @GetMapping("/activas")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<OfertaResponseDTO>> getAllActive() {
+        return ResponseEntity.ok(service.getAllActive());
+    }
+
+    // UPDATE OFERTA (NO AGREGA PRODUCTOS QUE YA POSEEN OFERTA)
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OfertaResponseDTO> updateOferta(@PathVariable Long id,
-                                                          @RequestBody OfertaCreateRequestDTO request)
-    {
-        return ResponseEntity.ok(service.updateOferta(id, request));
+                                                          @RequestBody OfertaCreateRequestDTO request) {
+        return ResponseEntity.ok(service.updateOffer(id, request));
     }
 
     @DeleteMapping("/{id}")
@@ -52,4 +93,16 @@ public class OfertaController {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{ofertaId}/producto/{productoId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<OfertaResponseDTO> associateProduct(
+            @PathVariable Long ofertaId,
+            @PathVariable Long productoId) {
+
+        return ResponseEntity.ok(
+                service.associateProductToOffer(ofertaId, productoId)
+        );
+    }
+
 }

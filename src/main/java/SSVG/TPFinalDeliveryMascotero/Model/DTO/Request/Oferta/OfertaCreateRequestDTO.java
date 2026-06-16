@@ -16,9 +16,11 @@ import java.util.List;
 @Setter
 public class OfertaCreateRequestDTO {
 
-    @NotBlank(message = "El nombre es obligatorio")
+    @NotBlank(message = "El nombre de la oferta es obligatorio")
+    @Size(max = 30, message = "El nombre de la oferta no puede exceder los 30 caracteres")
     private String nombre;
 
+    @Size(max = 100, message = "La descripcion de la oferta no puede exceder los 100 caracteres")
     private String descripcion;
 
     @NotNull(message = "El porcentaje es obligatorio")
@@ -34,6 +36,6 @@ public class OfertaCreateRequestDTO {
     @FutureOrPresent(message = "La fecha de fin no puede ser una fecha anterior a la de inicio")
     private LocalDate fechaFin;
 
-    // Lista de IDs de productos asociados
+    @NotEmpty(message = "La lista de productos no puede estar vacia")
     private List<Long> productosIds;
 }
