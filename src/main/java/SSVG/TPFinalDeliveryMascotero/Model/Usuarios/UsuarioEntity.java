@@ -19,16 +19,16 @@ public class UsuarioEntity {
     @Column(nullable = false)
     private boolean isActive;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String nombre;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String apellido;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 40)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 8)
     private String password;
 
     @ManyToOne
