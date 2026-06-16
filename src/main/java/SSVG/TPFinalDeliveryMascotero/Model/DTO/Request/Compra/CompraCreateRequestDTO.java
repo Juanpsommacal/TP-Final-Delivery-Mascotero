@@ -4,6 +4,7 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.DetalleCompra.DetalleComp
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 @Setter
 public class CompraCreateRequestDTO {
 
+    @Positive(message = "El ID del proveedor debe ser mayor a 0")
     @NotNull(message = "El campo proveedor no puede estar vacio")
     private Long proveedorId;
 

@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
+import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ClienteMapper;
@@ -81,6 +82,10 @@ public class ClienteService {
         ClienteEntity cliente = getEntityById(clienteId);
         DireccionEntity direccion = direccionMapper.toEntity(request);
 
+        if (hasDireccion(cliente, direccion)){
+            throw new ResourceAlreadyAssociatedException("El cliente ya tiene esa direccion asociada");
+        }
+
         cliente.getDirecciones().add(direccion);
         direccion.getClientes().add(cliente);
         direccionService.saveEntity(direccion);
@@ -118,11 +123,16 @@ public class ClienteService {
     public boolean hasDireccion(ClienteEntity cliente, DireccionEntity direccionParam){
         return cliente.getDirecciones().stream()
                 .anyMatch(direccionCliente ->
-                        direccionCliente.getCalle().equalsIgnoreCase(direccionParam.getCalle())
-                                && direccionCliente.getNumero().equals(direccionParam.getNumero())
+                            normalizar(direccionCliente.getCalle()).equals(normalizar(direccionParam.getCalle()))
+                                && Objects.equals(direccionCliente.getNumero(), direccionParam.getNumero())
                                 && Objects.equals(direccionCliente.getPiso(), direccionParam.getPiso())
-                                && Objects.equals(direccionCliente.getDepartamento(), direccionParam.getDepartamento())
+                                && normalizar(direccionCliente.getDepartamento()).equals(normalizar(direccionParam.getDepartamento()))
                 );
     }
 
+    // Sirve para que cualquier String que se reciba se "normalice" a una forma estandar
+    // si se recibe "Av. Luro  " y por otro lado "av.  luro", se normaliza a " av. luro", para que sean lo mismo
+    private String normalizar(String valor){
+        return valor == null ? "" : valor.trim().toLowerCase();
+    }
 }

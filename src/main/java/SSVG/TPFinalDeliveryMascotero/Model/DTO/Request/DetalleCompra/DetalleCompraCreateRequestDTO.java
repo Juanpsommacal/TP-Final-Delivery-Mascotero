@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 @Setter
 public class DetalleCompraCreateRequestDTO {
 
+    @Positive(message = "El ID del producto debe ser mayor a 0")
     @NotNull(message = "La id del producto no puede estar vacia")
     private Long productoId;
 

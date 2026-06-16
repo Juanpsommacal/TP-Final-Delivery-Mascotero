@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 @Setter
 public class PagoCreateRequestDTO {
 
+    @Positive(message = "El ID del pedido debe ser mayor a 0")
     @NotNull(message = "El ID del Pedido no puede estar vacio, es obligatorio")
     private Long pedidoId;
 
