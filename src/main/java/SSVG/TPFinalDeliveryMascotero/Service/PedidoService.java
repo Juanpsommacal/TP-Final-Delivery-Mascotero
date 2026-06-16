@@ -176,6 +176,27 @@ public class PedidoService {
         repository.save(pedido);
     }
 
+    @Transactional
+    public PedidoResponseDTO deliverPedido(Long id){
+        PedidoEntity pedido = getEntityById(id);
+
+        if (pedido.getEstadoPedido() == EstadoPedido.CANCELADO){
+            throw new InvalidResourceStateException("No se puede entregar un pedido cancelado");
+        }
+
+        if (pedido.getEstadoPedido() == EstadoPedido.ENTREGADO){
+            throw new InvalidResourceStateException("El pedido ya fue entregado");
+        }
+
+        if (pedido.getEstadoPago() != EstadoPago.PAGADO){
+            throw new InvalidResourceStateException("El pedido no esta totalmente pagado, no se puede entregar");
+        }
+
+        pedido.setEstadoPedido(EstadoPedido.ENTREGADO);
+
+        return mapper.toResponse(repository.save(pedido));
+    }
+
     /// ----- Formateo -----
 
     private String formatearDireccionCompleta(DireccionEntity direccion) {

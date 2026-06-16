@@ -102,6 +102,7 @@ public class CompraService {
                 .toList();
     }
 
+    @Transactional
     public CompraResponseDTO receiveCompra(Long id){
         // Se valida que exista la compra
         CompraEntity compra = getEntityById(id);
