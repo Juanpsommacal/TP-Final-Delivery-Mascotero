@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.DuplicateResourceException;
+import SSVG.TPFinalDeliveryMascotero.Exception.InvalidResourceStateException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.CompraMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DetalleCompraMapper;
@@ -99,6 +100,30 @@ public class CompraService {
         return repository.findAll().stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    public CompraResponseDTO receiveCompra(Long id){
+        // Se valida que exista la compra
+        CompraEntity compra = getEntityById(id);
+
+        // Se hacen las validaciones del Estado de la Compra
+        if (compra.getEstadoCompra() == EstadoCompra.RECIBIDA){
+            throw new InvalidResourceStateException("La compra ya fue recibida");
+        }
+        if (compra.getEstadoCompra() == EstadoCompra.CANCELADA){
+            throw new InvalidResourceStateException("No se puede recibir una compra cancelada");
+        }
+
+        // Aca se recorren los detalles de la compra y se le hace la suma al producto, de la cantidad recibida por la compra
+        compra.getProductos().forEach(detalleCompra ->{
+            // Se le actualiza el Stock a los productos del detalle de la compra
+            increaseProductStock(detalleCompra.getProducto(), detalleCompra.getCantidad());
+        });
+
+        // Por ultimo, se actualiza el estado de la compra a RECIBIDA
+        compra.setEstadoCompra(EstadoCompra.RECIBIDA);
+
+        return mapper.toResponse(repository.save(compra));
     }
 
     // Funciones Utiles

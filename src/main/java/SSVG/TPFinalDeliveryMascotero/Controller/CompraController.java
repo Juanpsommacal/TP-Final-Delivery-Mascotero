@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,5 +32,10 @@ public class CompraController {
     @GetMapping("/{id}")
     public ResponseEntity<CompraResponseDTO> getById(@PathVariable Long id){
         return ResponseEntity.ok(service.getDTOById(id));
+    }
+
+    @PatchMapping("/{id}/recibir")
+    public ResponseEntity<CompraResponseDTO> receiveCompra(@PathVariable Long id){
+        return ResponseEntity.ok(service.receiveCompra(id));
     }
 }
