@@ -130,8 +130,8 @@ public class ClienteService {
                 );
     }
 
-    // Sirve para que cualquier String que se reciba se "normalice" a una forma estandar
-    // si se recibe "Av. Luro  " y por otro lado "av.  luro", se normaliza a " av. luro", para que sean lo mismo
+    // Se complementa con el metodo "hasDireccion" sirve para que cualquier String que se reciba se "normalice" a una forma unica
+    // si se recibe "Av. Luro   " y por otro lado "av.  luro", se normaliza a " av. luro", para que sean lo mismo
     private String normalizar(String valor){
         return valor == null ? "" : valor.trim().toLowerCase();
     }

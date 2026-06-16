@@ -1,6 +1,5 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
-import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
 import SSVG.TPFinalDeliveryMascotero.Exception.InvalidDateRangeException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.OfertaMapper;
@@ -9,10 +8,8 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.OfertaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.OfertaEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.OfertaRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.validator.internal.constraintvalidators.bv.time.pastorpresent.PastOrPresentValidatorForOffsetTime;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -79,7 +76,7 @@ public class OfertaService {
     public void deleteById(Long id) {
         OfertaEntity oferta = getEntityById(id);
 
-        clearProductsFromOffer(oferta);
+        clearProductsOffer(oferta);
 
         repository.delete(oferta);
     }
@@ -87,15 +84,14 @@ public class OfertaService {
     ///----- Validations
 
     private void validateDates(LocalDate inicio, LocalDate fin) {
-
         if (fin.isBefore(inicio)) {
             throw new InvalidDateRangeException("La fecha de fin de la oferta no puede ser antes de la fecha de inicio");
         }
     }
 
-    // Se hacer la desasociacion de una Oferta y sus productos, para utilizar
+    // Se hace la desasociacion de una Oferta y sus productos, para utilizar
     // en los metodos de actualizacion y eliminacion de Ofertas
-    private void clearProductsFromOffer(OfertaEntity oferta){
+    private void clearProductsOffer(OfertaEntity oferta){
 
         // Aca se elimina la "relacion" entre una oferta y sus productos asociados,
         // dejando a los productos con la oferta en "null"

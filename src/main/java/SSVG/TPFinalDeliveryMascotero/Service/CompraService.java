@@ -1,25 +1,24 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
+import SSVG.TPFinalDeliveryMascotero.Exception.DuplicateResourceException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.CompraMapper;
+import SSVG.TPFinalDeliveryMascotero.Mapper.DetalleCompraMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.CompraEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Compra.CompraCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.CompraResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetalleCompraEntity;
-import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoCompra;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.ProveedorEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.CompraRepository;
-import SSVG.TPFinalDeliveryMascotero.Repository.DetalleCompraRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -27,38 +26,36 @@ import java.util.stream.Collectors;
 public class CompraService {
 
     private final CompraRepository repository;
+    private final CompraMapper mapper;
     private final ProveedorService proveedorService;
     private final ProductoService productoService;
-    private final CompraMapper mapper;
+    private final DetalleCompraMapper detalleCompraMapper;
 
     @Transactional
     public CompraResponseDTO createCompra(CompraCreateRequestDTO request){
 
+        validateNotRepeatProduct(request);
+
         //Buscamos el proveedor
         ProveedorEntity proveedor = proveedorService.getEntityById(request.getProveedorId());
 
-        //Creamos la compra vacia y vamos seteando los atributos
-        CompraEntity newCompra = new CompraEntity();
+        //Creamos la newCompra vacia y vamos seteando los atributos
+        CompraEntity newCompra = mapper.toEntity(request);
 
         newCompra.setProveedor(proveedor);
         newCompra.setFecha(LocalDate.now());
-        newCompra.setEstado(EstadoPedido.PENDIENTE);
+        newCompra.setEstadoCompra(EstadoCompra.PENDIENTE);
 
         //Para calcular el monto total del pedido multiplicamos el precio de la request por la cantidad
-        BigDecimal montoTotal = request.getDetalle()
-                .stream()
+        BigDecimal montoTotal = request.getDetalle().stream()
                 .map(detalle ->
                         detalle.getPrecioUnitario()
                                 .multiply(BigDecimal.valueOf(detalle.getCantidad())))
                 //Eso lo acumulamos y lo vamos sumando
-                .reduce(BigDecimal.ZERO,
-                        BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //Ahora seteamos el precio
         newCompra.setMontoTotal(montoTotal);
-
-        //Y guardamos la compra asi nos da la ID
-        CompraEntity savedCompra = repository.save(newCompra);
 
         //Ahora creamos una lista de detalleCompraEntity
         List<DetalleCompraEntity> detalles = request.getDetalle()
@@ -66,25 +63,25 @@ public class CompraService {
                 //Transformamos a producto
                 .map(requestDetalle -> {
 
-                    ProductoEntity producto =
-                            productoService.getEntityById(requestDetalle.getProductoId());
+                    ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
 
                     //Creamos los detalleCompraEntity y seteamos los atributos
-                    DetalleCompraEntity newDetalle = new DetalleCompraEntity();
-                    newDetalle.setCompra(savedCompra);
+                    DetalleCompraEntity newDetalle = detalleCompraMapper.toEntity(requestDetalle);
                     newDetalle.setProducto(producto);
-                    newDetalle.setCantidad(requestDetalle.getCantidad());
-                    newDetalle.setPrecioUnitario(requestDetalle.getPrecioUnitario());
+                    newDetalle.setCompra(newCompra);
 
                     return newDetalle;
                 })
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        //Seteamos el detalle dentro de la compra
-        savedCompra.setProductos(detalles);
+        //Seteamos el detalle dentro de la newCompra
+        newCompra.setProductos(detalles);
 
-        //Guardamos en el repo y devolvemos el DTO de response.
-        return mapper.toResponse(repository.save(savedCompra));
+        //Y guardamos la newCompra en el Repository de las Compras
+        CompraEntity savedCompra = repository.save(newCompra);
+
+        // Devolvemos el DTO de response.
+        return mapper.toResponse(savedCompra);
     }
 
     public CompraEntity getEntityById(Long id){
@@ -106,7 +103,24 @@ public class CompraService {
 
     // Funciones Utiles
 
-    //NO se para que esta esto...
+    // Sirve para validar que no se cargue el mismo producto 2 veces en la misma request tanto de Compra, Pedido y Oferta
+    private void validateNotRepeatProduct(CompraCreateRequestDTO request) {
+
+        // Se obtienen la cantidad de Productos Unicos de la request eliminando los repetidos
+        // para despues comparar con los que hay realmente en la request
+        long cantProductosUnicos = request.getDetalle().stream()
+                .map(detalle -> detalle.getProductoId())
+                .distinct()
+                .count();
+
+        // Si "cantProductosUnicos" = 2 y en la request original (sin eliminar los repetidos) habian 3 productoId
+        // tira excepcion que se repitieron los productos en la request
+        if (cantProductosUnicos != request.getDetalle().size()){
+            throw new DuplicateResourceException("No se puede repetir el mismo Producto en el detalle de la compra");
+        }
+    }
+
+    // Aumenta el Stock del Producto, si se recibe "null" se setea a 0
     private void increaseProductStock(ProductoEntity producto, Integer cantidad){
         Integer stockActual = producto.getStock();
 

@@ -19,7 +19,7 @@ public class CompraResponseDTO {
 
     private String nombreProveedor;
 
-    private String estado;
+    private String estadoCompra;
 
     private List<DetalleCompraResponseDTO> detalleResponseDTO;
 

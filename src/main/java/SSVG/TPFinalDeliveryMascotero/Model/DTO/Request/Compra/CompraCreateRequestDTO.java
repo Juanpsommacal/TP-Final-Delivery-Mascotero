@@ -20,11 +20,10 @@ import java.util.List;
 public class CompraCreateRequestDTO {
 
     @Positive(message = "El ID del proveedor debe ser mayor a 0")
-    @NotNull(message = "El campo proveedor no puede estar vacio")
+    @NotNull(message = "El ID del proveedor no puede estar vacio")
     private Long proveedorId;
 
     @NotEmpty(message = "El detalle de la compra no puede estar vacio")
-    @Valid
-    private List<DetalleCompraCreateRequestDTO> detalle;
-
+    private List<@Valid DetalleCompraCreateRequestDTO> detalle;
+    // El @Valid va adentro porque asi valida cada detalle de compra de la lista
 }

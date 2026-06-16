@@ -1,16 +1,10 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
-import SSVG.TPFinalDeliveryMascotero.Controller.ProductoController;
-import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
-import SSVG.TPFinalDeliveryMascotero.Exception.InsufficientStockException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
+import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.PedidoCreateRequestDTO;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetallePedidoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
@@ -40,6 +34,8 @@ public class PedidoService {
 
     @Transactional
     public PedidoResponseDTO createPedido(PedidoCreateRequestDTO request){
+
+        validateNotRepeatProduct(request);
 
         //Buscamos si el cliente existe
         ClienteEntity cliente = clienteService.getEntityById(request.getClienteId());
@@ -201,6 +197,20 @@ public class PedidoService {
 
         return "Piso: " + direccion.getPiso()
                 + " | Depto: " + direccion.getDepartamento();
+    }
+
+    // Funciones Utiles
+    // Sirve para validar que no se cargue el mismo producto 2 veces en la misma request
+    private void validateNotRepeatProduct(PedidoCreateRequestDTO request) {
+
+        long cantProductosUnicos = request.getDetalles().stream()
+                .map(detalle -> detalle.getProductoId())
+                .distinct()
+                .count();
+
+        if (cantProductosUnicos != request.getDetalles().size()){
+            throw new DuplicateResourceException("No se puede repetir el mismo Producto en el detalle del pedido");
+        }
     }
 
 }
