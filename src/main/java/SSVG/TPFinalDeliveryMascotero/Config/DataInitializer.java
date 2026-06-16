@@ -17,7 +17,6 @@ public class DataInitializer implements CommandLineRunner {
             if (!roleRepository.existsByRoleName(nombreRol)) {
                 RoleEntity nuevoRol = new RoleEntity();
                 nuevoRol.setRoleName(nombreRol);
-
                 roleRepository.save(nuevoRol);
                 System.out.println("Rol creado automáticamente: " + nombreRol);
             }

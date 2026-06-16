@@ -28,7 +28,7 @@ public class CompraController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<CompraResponseDTO>> getAll(){
         return ResponseEntity.ok(service.getAll());
     }

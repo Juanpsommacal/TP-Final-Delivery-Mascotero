@@ -2,6 +2,7 @@ package SSVG.TPFinalDeliveryMascotero.Exception;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,11 +14,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -245,8 +244,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleGenericException(
             Exception ex
     ) {
-        System.out.println("Error encontrado: " + ex.getMessage());
-
+       System.out.println(LocalDateTime.now() + " [Error encontrado] " + ex.getMessage());
         ErrorResponseDTO error = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

@@ -20,12 +20,10 @@ public class UserDetailsServiceImpl  implements UserDetailsService {
     private final UsuarioRepository usuarioRepository;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        System.out.println("llefaaaaaaaa");
         UsuarioEntity userEntity = usuarioRepository.findByEmail(username).orElseThrow(()->new UsernameNotFoundException("El usuario: no existe"));
         if(!userEntity.isActive()) throw new InactiveResourceException("el usuario no esta activo");
         String completeRole = "ROLE_".concat(userEntity.getRole().getRoleName().name());
        SimpleGrantedAuthority authorities = new SimpleGrantedAuthority(completeRole);
-        System.out.println("auto" + authorities);
         return new User(
                 userEntity.getEmail(),
                 userEntity.getPassword(),
