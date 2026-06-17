@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -163,12 +163,12 @@ public class GlobalExceptionHandler {
 
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.name(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.name(),
                 ex.getMessage()
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @ExceptionHandler(ResourceAlreadyAssociatedException.class)
@@ -176,12 +176,12 @@ public class GlobalExceptionHandler {
 
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.name(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.name(),
                 ex.getMessage()
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ErrorResponseDTO> handleDisabledException(DisabledException ex) {
@@ -199,12 +199,12 @@ public class GlobalExceptionHandler {
 
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.name(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.name(),
                 ex.getMessage()
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @ExceptionHandler(InvalidWeightRangeException.class)
@@ -238,16 +238,55 @@ public class GlobalExceptionHandler {
 
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.name(),
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(InvalidResourceStateException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInvalidResourceStateException(InvalidResourceStateException ex){
+
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.name(),
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDTO> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex){
+
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.name(),
-                ex.getMessage()
+                "El cuerpo de la request tiene un formato invalido"
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    @ExceptionHandler(InvalidResourceStateException.class)
-    public ResponseEntity<ErrorResponseDTO> handleInvalidResourceStateException(InvalidResourceStateException ex){
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponseDTO> handleResourceAlreadyExistsException(ResourceAlreadyExistsException ex){
+
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                HttpStatus.CONFLICT.name(),
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponseDTO> handleDuplicateResourceException(DuplicateResourceException ex){
 
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
@@ -319,24 +358,29 @@ public class GlobalExceptionHandler {
 
 
         @ExceptionHandler(ProductAlreadyHasOfferException.class)
-        public ResponseEntity<?> handleProductAlreadyHasOffer(ProductAlreadyHasOfferException ex) {
+        public ResponseEntity<ErrorResponseDTO> handleProductAlreadyHasOfferException(ProductAlreadyHasOfferException ex) {
 
-            Map<String, Object> body = new HashMap<>();
+            ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                    LocalDateTime.now(),
+                    HttpStatus.CONFLICT.value(),
+                    HttpStatus.CONFLICT.name(),
+                    ex.getMessage()
+            );
 
-            body.put("error", "PRODUCT_ALREADY_HAS_OFFER");
-            body.put("message", ex.getMessage());
-            body.put("status", HttpStatus.CONFLICT.value());
-            body.put("timestamp", LocalDateTime.now());
-
-            return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
         }
 
     @ExceptionHandler(EmptyListException.class)
-    public ResponseEntity<String> handleEmptyListException(
-            EmptyListException ex) {
+    public ResponseEntity<ErrorResponseDTO> handleEmptyListException(EmptyListException ex) {
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.name(),
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
     @ExceptionHandler(InvalidRevokePrivilege.class)
     public ResponseEntity<ErrorResponseDTO> handleInvalidRevokePrivilege(InvalidRevokePrivilege ex){

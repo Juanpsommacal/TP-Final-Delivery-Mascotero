@@ -1,13 +1,11 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
-import SSVG.TPFinalDeliveryMascotero.Controller.ProductoController;
+import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.PedidoCreateRequestDTO;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.CantidadPedidosPorEstadoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.TicketPromedioResponseDTO;
@@ -25,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,6 +49,9 @@ public class PedidoService {
         if(!clienteService.hasDireccion(cliente, direccionRequest))
             throw new ResourceNotAssociatedException("El cliente no tiene esa direccion asociada");
 
+        // Validamos que no se reciban productos repetidos en la request
+        validateNotRepeatProduct(request);
+
         //Ahora verificamos si el stock que tenemos es suficiente para el pedido
         Map<String, List<String>> errorsMap = new HashMap<>();
         List<String> productosSinStock = new ArrayList<>();
@@ -61,24 +63,26 @@ public class PedidoService {
                     ProductoEntity producto = productoService.getEntityById(detalle.getProductoId());
 
                     //Si hay algun producto que no tenga stock lo guardamos en errorsMap
-                    if(producto.getStock() < detalle.getCantidad())
+                    if(producto.getStock() < detalle.getCantidad()){
                         productosSinStock.add(producto.getMarca().concat(" ").concat(producto.getNombre()) +
                                 " | Stock necesario: "
                                 + detalle.getCantidad()
                                 + " | Stock disponible: "
                                 + producto.getStock());
+                    }
                     //Ahora verificamos que no haya ningun producto inactivo
-                    if(!producto.getActivo())
+                    if(!producto.getActivo()){
                         productosInactivos.add(producto.getMarca().concat(" ").concat(producto.getNombre()));
+                    }
                 });
 
         errorsMap.put("Productos sin stock: ", productosSinStock);
         errorsMap.put("Productos inactivos: ", productosInactivos);
 
         //Revisamos si errorsMap tiene contenido. Si hay errores tiramos la excepcion
-        if(!errorsMap.get("Productos sin stock: ").isEmpty() || !errorsMap.get("Productos inactivos: ").isEmpty())
+        if(!errorsMap.get("Productos sin stock: ").isEmpty() || !errorsMap.get("Productos inactivos: ").isEmpty()){
             throw new InsufficientStockException(errorsMap);
-
+        }
 
         //Creamos el pedido vacio y vamos seteando los atributos
         PedidoEntity newPedido = new PedidoEntity();
@@ -91,33 +95,17 @@ public class PedidoService {
         newPedido.setNumero(direccionRequest.getNumero());
         newPedido.setPisoDepto(formatearPisoDepto(direccionRequest));
 
-        //Creamos la lista de detallePedidoEntity para obtener los precios con descuentos
-        List<DetallePedidoEntity> detalles = request.getDetalles()
+        //Calculamos el precio total del pedido con las ofertas activas
+        BigDecimal montoTotal = request.getDetalles()
                 .stream()
-                //Transformamos a producto
-                .map(requestDetalle -> {
+                .map(detalle -> {
+                        ProductoEntity producto = productoService.getEntityById(detalle.getProductoId());
 
-                    ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
+                        BigDecimal precioConDescuento = calculateUnitPriceProducto(producto);
 
-                    //Creamos los detallePedidoEntity y seteamos los atributos.
-                    //Aca nos falta la ID del pedido. Todavia no la tenemos disponible
-                    DetallePedidoEntity newDetalle = new DetallePedidoEntity();
-                    newDetalle.setCantidad(requestDetalle.getCantidad());
-                    newDetalle.setPrecioUnitario(producto.getPrecio());
-                    if(producto.getOferta() != null)
-                        newDetalle.setDescuentoAplicado(producto.getOferta().getPorcentaje());
-                    newDetalle.setProducto(producto);
-                    return newDetalle;
+                        return precioConDescuento.multiply(BigDecimal.valueOf(detalle.getCantidad()));
                 })
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        //Calculamos el precio total del pedido desde el detallePedido
-        BigDecimal montoTotal = detalles
-                .stream()
-                .map(this::calcularPrecioTotal)
-                //acumulamos para obtener el total
-                .reduce(BigDecimal.ZERO,
-                        BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //Descontamos el stock de los productos
         request.getDetalles()
@@ -133,10 +121,40 @@ public class PedidoService {
         //Guardamos el pedido asi nos da la ID
         PedidoEntity savedPedido = repository.save(newPedido);
 
-        //Seteamos la ID del pedido en los detalles
-        detalles.forEach(detalle -> detalle.setPedido(savedPedido));
+        //Ahora creamos la lista de detallePedidoEntity
+        List<DetallePedidoEntity> detalles = request.getDetalles()
+                .stream()
+                //Transformamos a producto
+                .map(requestDetalle -> {
 
-        //Seteamos los detalles dentro del pedido
+                    ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
+
+                    // Se guarda el precio original sin descuento
+                    BigDecimal precioOriginal = producto.getPrecio();
+                    // Se guarda el precio con el descuento aplicado
+                    BigDecimal precioConDescuento = calculateUnitPriceProducto(producto);
+
+                    //Creamos los detallePedidoEntity y seteamos los atributos
+                    DetallePedidoEntity newDetalle = new DetallePedidoEntity();
+                    newDetalle.setCantidad(requestDetalle.getCantidad());
+                    newDetalle.setPrecioUnitario(precioOriginal);
+                    newDetalle.setPrecioDescuento(precioConDescuento);
+
+                    if (currentOferta(producto)){
+                        newDetalle.setDescuentoAplicado(producto.getOferta().getPorcentaje());
+                    }else {
+                        // Si no tiene una oferta asignada el producto el descuento se le setea a "0.0"
+                        newDetalle.setDescuentoAplicado(0.0);
+                    }
+
+                    newDetalle.setPedido(savedPedido);
+                    newDetalle.setProducto(producto);
+
+                    return newDetalle;
+                })
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        //Seteamos el detalle dentro del pedido
         savedPedido.setProductos(detalles);
 
         //Guardamos en el repo y devolvemos el DTO de response
@@ -162,12 +180,13 @@ public class PedidoService {
 
     /// ----- Updates / Delete -----
 
+    // Cancelar Pedido
     public void deleteById(Long id){
         PedidoEntity pedido = getEntityById(id);
         //Verificamos que el pedido no este cancelado
-        if(pedido.getEstadoPedido().equals(EstadoPedido.CANCELADO))
+        if(pedido.getEstadoPedido().equals(EstadoPedido.CANCELADO)) {
             throw new InactiveResourceException("El pedido con la ID: " + id + " ya fue cancelado");
-
+        }
         //Recorremos el detalle de productos y devolvemos el stock
         pedido.getProductos()
                 .forEach(detalle -> {
@@ -183,14 +202,25 @@ public class PedidoService {
         repository.save(pedido);
     }
 
-    /// ----- Utiles -----
+    // Sirve para registrar una Entrega de un pedido por ID
+    @Transactional
+    public PedidoResponseDTO deliverPedido(Long id){
+        PedidoEntity pedido = getEntityById(id);
 
-    private BigDecimal calcularPrecioTotal(DetallePedidoEntity entity) {
-        BigDecimal subTotal = entity.getPrecioUnitario().multiply(BigDecimal.valueOf(entity.getCantidad()));
-        if(entity.getDescuentoAplicado() != null){
-            subTotal = subTotal.multiply(BigDecimal.valueOf(1.00 - entity.getDescuentoAplicado() / 100));
+        // Validamos que el Estado del Pedido no este CANCELADO
+        if (pedido.getEstadoPedido() == EstadoPedido.CANCELADO){
+            throw new InvalidResourceStateException("No se puede entregar un pedido cancelado");
         }
-        return subTotal;
+
+        // Validamos que el Estado del Pedido ya no figure como ENTREGADO
+        if (pedido.getEstadoPedido() == EstadoPedido.ENTREGADO){
+            throw new InvalidResourceStateException("El pedido ya fue entregado");
+        }
+
+        // Se setea el Estado del pedido como ENTREGADO
+        pedido.setEstadoPedido(EstadoPedido.ENTREGADO);
+
+        return mapper.toResponse(repository.save(pedido));
     }
 
     /// ----- Formateo -----
@@ -210,6 +240,66 @@ public class PedidoService {
 
         return "Piso: " + direccion.getPiso()
                 + " | Depto: " + direccion.getDepartamento();
+    }
+
+    /// ---- Funciones Utiles ----
+
+    // Sirve para validar que no se cargue el mismo producto 2 veces en la misma request
+    private void validateNotRepeatProduct(PedidoCreateRequestDTO request) {
+
+        long cantProductosUnicos = request.getDetalles().stream()
+                .map(detalle -> detalle.getProductoId())
+                .distinct()
+                .count();
+
+        if (cantProductosUnicos != request.getDetalles().size()){
+            throw new DuplicateResourceException("No se puede repetir el mismo Producto en el detalle del pedido");
+        }
+    }
+
+    // Devuelve true si la oferta asociada al producto esta vigente // false si la oferta se vencio o no tiene oferta asociada
+    private boolean currentOferta(ProductoEntity producto){
+
+        // Se valida que el producto tenga alguna oferta asociada (producto.getOferta == null)
+        if (producto.getOferta() == null) {
+            return false;
+        }
+
+        // Valida que la fecha de Inicio y la de Fin no sean nulas
+        if (producto.getOferta().getFechaInicio() == null || producto.getOferta().getFechaFin() == null){
+            return false;
+        }
+            // Se crea una variable guardando la fecha actual para comparar con
+            // las fechas de Inicio y Fin de la Oferta asociada al Producto recibido
+            LocalDate today = LocalDate.now();
+
+            //Se hace la comparacion para saber si la fecha de Hoy (today) esta
+            // por fuera del rango de las fechas de vigencia de la oferta
+            return !today.isBefore(producto.getOferta().getFechaInicio()) && !today.isAfter(producto.getOferta().getFechaFin());
+            // Seria: "Si hoy NO esta antes de la fecha de Inicio de la oferta y Hoy no esta despues de la fecha de Fin"
+    }
+
+    // Calcula el precio unitario final de un producto
+    private BigDecimal calculateUnitPriceProducto(ProductoEntity producto){
+
+        BigDecimal precioOriginal = producto.getPrecio();
+
+        // Se valida que el producto tenga asociada una oferta y que este vigente
+        if (!currentOferta(producto)){
+            return precioOriginal;
+        }
+
+        // Se convierte el porcentaje de un Double a un BigDecimal que es mas preciso y se guarda
+        BigDecimal porcentaje = BigDecimal.valueOf(producto.getOferta().getPorcentaje());
+
+        // Se calcula el descuento del precio dependiendo el porcentaje de la oferta
+        BigDecimal descuento = precioOriginal
+                .multiply(porcentaje)
+                // Cuando se divide con BigDecimal te pide
+                // especificar por parametros: (por cuanto se divide (100), cuantos decimales dejo (2), como quiero redondear el resultado (HALF_UP)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        return precioOriginal.subtract(descuento);
     }
 
 

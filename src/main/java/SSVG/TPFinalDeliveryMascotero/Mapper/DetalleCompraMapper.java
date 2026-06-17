@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Mapper;
 
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.DetalleCompra.DetalleCompraCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DetalleCompraResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetalleCompraEntity;
 import org.mapstruct.Mapper;
@@ -10,15 +11,14 @@ import java.math.BigDecimal;
 @Mapper(componentModel = "spring")
 public interface DetalleCompraMapper {
 
-    @Mapping(
-            target = "precioTotal",
-            expression = "java(calcularPrecioTotal(entity))"
-    )
-    @Mapping(
-            target = "nombreProducto",
-            expression = "java(getNombreProductoCompleto(entity))"
-    )
-    @Mapping(target = "idProducto", source = "producto.id")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "producto", ignore = true)
+    @Mapping(target = "compra", ignore = true)
+    public DetalleCompraEntity toEntity(DetalleCompraCreateRequestDTO request);
+
+    @Mapping(target = "precioTotal", expression = "java(calcularPrecioTotal(entity))")
+    @Mapping(target = "nombreProducto", expression = "java(getNombreProductoCompleto(entity))")
+    @Mapping(target = "productoId", source = "producto.id")
     public DetalleCompraResponseDTO toResponse (DetalleCompraEntity entity);
 
     default BigDecimal calcularPrecioTotal(DetalleCompraEntity entity) {

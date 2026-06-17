@@ -15,11 +15,10 @@ public class DetallePedidoResponseDTO {
 
     private BigDecimal precioUnitario;
 
-    private BigDecimal subtotal;
-
     private Double descuentoAplicado;
 
-    private BigDecimal precioTotal;
+    private BigDecimal precioDescuento;
 
+    private BigDecimal subtotal;
 
 }

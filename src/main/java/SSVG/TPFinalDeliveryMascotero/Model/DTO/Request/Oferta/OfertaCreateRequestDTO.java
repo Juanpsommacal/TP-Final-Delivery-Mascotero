@@ -37,5 +37,8 @@ public class OfertaCreateRequestDTO {
     private LocalDate fechaFin;
 
     @NotEmpty(message = "La lista de productos no puede estar vacia")
-    private List<Long> productosIds;
+    private List<@NotNull(message = "El ID del producto no puede estar vacio")
+                 @Positive(message = "El ID del producto debe ser mayor a 0")
+                 Long> productosIds;
+    // Se le ponen las dos validaciones adentro de la lista para que se le aplique a cada ID de producto
 }

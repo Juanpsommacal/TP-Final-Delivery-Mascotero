@@ -1,8 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Model.Enums;
 
-public enum EstadoPedido {
+public enum EstadoCompra {
     PENDIENTE,
-    LISTO,
-    ENTREGADO,
-    CANCELADO
+    RECIBIDA,
+    CANCELADA
 }

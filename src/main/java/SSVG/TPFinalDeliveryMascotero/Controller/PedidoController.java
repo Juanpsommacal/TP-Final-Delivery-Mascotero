@@ -44,4 +44,9 @@ public class PedidoController {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/entregar")
+    public ResponseEntity<PedidoResponseDTO> deliverPedido(@PathVariable Long id){
+        return ResponseEntity.ok(service.deliverPedido(id));
+    }
 }

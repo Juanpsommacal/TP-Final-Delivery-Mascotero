@@ -33,8 +33,8 @@ public class PagoController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("cliente/{clienteId}")
     @PreAuthorize("hasAnyRole('ADMIN','USER)")
+    @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<List<PagoResponseDTO>> getByClienteId(@PathVariable Long clienteId){
         List<PagoResponseDTO> response = service.listPagosByClienteId(clienteId);
         return ResponseEntity.ok(response);

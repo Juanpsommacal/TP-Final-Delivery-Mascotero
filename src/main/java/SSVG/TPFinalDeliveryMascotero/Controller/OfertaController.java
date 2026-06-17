@@ -19,19 +19,6 @@ public class OfertaController {
 
     private final OfertaService service;
 
-    // QUITA TODOS LOS PRODUCTOS DE LA OFERTA..
-
-    @DeleteMapping("/{ofertaId}/delete-products")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<OfertaResponseDTO> removeAllProductsFromOffer(
-            @PathVariable Long ofertaId) {
-
-        OfertaResponseDTO response =
-                service.removeAllProductsFromOffer(ofertaId);
-
-        return ResponseEntity.ok(response);
-    }
-
     //QUITA DE LA OFERTA UN SOLO PRODUCTO
     @PatchMapping("/{ofertaId}/producto/{productoId}/remove")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
@@ -42,20 +29,11 @@ public class OfertaController {
         );
     }
 
-    // AGREGA TODOS LOS PRODUCTOS A LA OFERTA (Menos los Ya Poseen Una)
-    @PatchMapping("/{ofertaId}/all-products")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<OfertaResponseDTO> associateAllProducts(
-            @PathVariable Long ofertaId) {
-
-        return ResponseEntity.ok(service.associateAllProductsToOffer(ofertaId)
-        );
-    }
 
     // CREA OFERTA..
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
-    public ResponseEntity<OfertaResponseDTO> create(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
+    public ResponseEntity<OfertaResponseDTO> createOferta(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
         OfertaResponseDTO response = service.createOferta(requestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -83,13 +61,13 @@ public class OfertaController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OfertaResponseDTO> updateOferta(@PathVariable Long id,
-                                                          @RequestBody OfertaCreateRequestDTO request) {
-        return ResponseEntity.ok(service.updateOffer(id, request));
+                                                          @Valid @RequestBody OfertaCreateRequestDTO request) {
+        return ResponseEntity.ok(service.updateOferta(id, request));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOferta(@PathVariable Long id) {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
@@ -101,7 +79,7 @@ public class OfertaController {
             @PathVariable Long productoId) {
 
         return ResponseEntity.ok(
-                service.associateProductToOffer(ofertaId, productoId)
+                service.associatedProductToOffer(ofertaId, productoId)
         );
     }
 

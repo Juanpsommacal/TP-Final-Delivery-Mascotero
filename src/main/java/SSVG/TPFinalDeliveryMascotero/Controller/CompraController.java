@@ -38,4 +38,10 @@ public class CompraController {
     public ResponseEntity<CompraResponseDTO> getById(@PathVariable Long id){
         return ResponseEntity.ok(service.getDTOById(id));
     }
+
+    @PatchMapping("/{id}/recibir")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<CompraResponseDTO> receiveCompra(@PathVariable Long id){
+        return ResponseEntity.ok(service.receiveCompra(id));
+    }
 }
