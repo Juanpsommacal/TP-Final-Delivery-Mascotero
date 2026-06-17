@@ -1,6 +1,8 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorMesResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import SSVG.TPFinalDeliveryMascotero.Service.ReportesService;
 import jakarta.validation.constraints.*;
@@ -19,6 +21,8 @@ import java.util.List;
 public class ReportesController {
 
     private final ReportesService service;
+
+    /// ----- Busqueda de pedidos
 
     @GetMapping("/buscar-pedidos-por-direccion")
     public ResponseEntity<List<PedidoResponseDTO>> getPedidosByDireccion(@RequestParam
@@ -39,6 +43,21 @@ public class ReportesController {
     @GetMapping("/buscar-pedidos-por-estado")
     public ResponseEntity<List<PedidoResponseDTO>> getPedidosByEstado(@RequestParam @NotNull(message = "El estado no puede estar vacio") EstadoPedido estado){
         return ResponseEntity.ok(service.getPedidosByEstado(estado));
+    }
+
+    @GetMapping("/buscar-pedidos-por-estado-pago")
+    public ResponseEntity<List<PedidoResponseDTO>> getPedidosByEstadoPago(@RequestParam @NotNull(message = "El estado no puede estar vacio")EstadoPago estado){
+        return ResponseEntity.ok(service.getPedidosByEstadoPago(estado));
+    }
+
+    /// ----- Busqueda de usuarios
+
+    /// ----- Metricas
+
+    @GetMapping("/calcular-total-ventas-por-mes")
+    public ResponseEntity<VentasPorMesResponseDTO> getTotalVentasByMes(@RequestParam @NotNull(message = "El año es obligatorio") Integer anio,
+                                                                         @RequestParam @Min(1) @Max(12) @NotNull(message = "El mes debe ser entre 1 y 12") Integer mes){
+        return ResponseEntity.ok(service.getVentasByMes(anio, mes));
     }
 
 }

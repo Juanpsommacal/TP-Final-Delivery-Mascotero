@@ -1,10 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Controller.ProductoController;
-import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
-import SSVG.TPFinalDeliveryMascotero.Exception.InsufficientStockException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
+import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
@@ -12,6 +9,7 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreate
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.PedidoCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorMesResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetallePedidoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
@@ -225,4 +223,19 @@ public class PedidoService {
     public List<PedidoEntity> getPedidosByEstado(EstadoPedido estado){
         return repository.findByEstadoPedido(estado);
     }
+
+    public List<PedidoEntity> getPedidosByEstadoPago(EstadoPago estado){
+        return repository.findByEstadoPago(estado);
+    }
+
+    public VentasPorMesResponseDTO  getPedidosByMes(Integer anio, Integer mes){
+        Optional<VentasPorMesResponseDTO> ventasPorMes = repository.getVentasPorMes(anio, mes);
+        if(ventasPorMes.isEmpty())
+            throw new EmptyListException("No se encontro ningun pedido en esa fecha");
+
+        return ventasPorMes.get();
+
+    }
+
+
 }
