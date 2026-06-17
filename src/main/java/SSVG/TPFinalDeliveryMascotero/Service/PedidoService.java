@@ -1,11 +1,16 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.*;
+import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.PedidoCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.CantidadPedidosPorEstadoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.TicketPromedioResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorMesResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorRangoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetallePedidoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
@@ -86,7 +91,8 @@ public class PedidoService {
         newPedido.setFecha(LocalDate.now());
         newPedido.setEstadoPedido(EstadoPedido.PENDIENTE);
         newPedido.setEstadoPago(EstadoPago.PENDIENTE);
-        newPedido.setDireccionCompleta(formatearDireccionCompleta(direccionRequest));
+        newPedido.setCalle(direccionRequest.getCalle());
+        newPedido.setNumero(direccionRequest.getNumero());
         newPedido.setPisoDepto(formatearPisoDepto(direccionRequest));
 
         //Calculamos el precio total del pedido con las ofertas activas
@@ -219,10 +225,6 @@ public class PedidoService {
 
     /// ----- Formateo -----
 
-    private String formatearDireccionCompleta(DireccionEntity direccion) {
-        return direccion.getCalle() + " " + direccion.getNumero();
-    }
-
     private String formatearPisoDepto(DireccionEntity direccion) {
         if (direccion.getPiso() == null && direccion.getDepartamento() == null) {
             return "Sin especificar";
@@ -299,5 +301,55 @@ public class PedidoService {
 
         return precioOriginal.subtract(descuento);
     }
+
+
+    /// ----- Busqueda en BDD -----
+
+    public List<PedidoEntity> getPedidosByDireccion(String calle, Integer numero){
+        return repository.findByCalleIgnoreCaseAndNumero(calle, numero);
+    }
+
+    public List<PedidoEntity> getPedidosByFecha(LocalDate fecha){
+        return repository.findByFecha(fecha);
+    }
+
+    public List<PedidoEntity> getPedidosByEstado(EstadoPedido estado){
+        return repository.findByEstadoPedido(estado);
+    }
+
+    public List<PedidoEntity> getPedidosByEstadoPago(EstadoPago estado){
+        return repository.findByEstadoPago(estado);
+    }
+
+    public VentasPorMesResponseDTO  getPedidosByMes(Integer anio, Integer mes){
+        Optional<VentasPorMesResponseDTO> ventasPorMes = repository.getVentasPorMes(anio, mes);
+        if(ventasPorMes.isEmpty())
+            throw new EmptyListException("No se encontro ningun pedido entregado y pagado en ese mes");
+
+        return ventasPorMes.get();
+    }
+
+    public VentasPorRangoResponseDTO getVentasByRango(LocalDate fechaInicio, LocalDate fechaFin){
+        Optional<VentasPorRangoResponseDTO> ventasPorRango = repository.getVentasPorRango(fechaInicio, fechaFin);
+        if(ventasPorRango.isEmpty())
+            throw new EmptyListException("No se encontro ningun pedido entregado y pagado en ese rango de fechas");
+
+        return ventasPorRango.get();
+    }
+
+    public List<CantidadPedidosPorEstadoResponseDTO> getCantidadPedidosPorEstadoPorMes(Integer anio, Integer mes){
+        List<CantidadPedidosPorEstadoResponseDTO> cantidadPedidos = repository.getCantidadPedidosPorEstadoPorMes(anio, mes);
+        if(cantidadPedidos.isEmpty())
+            throw new EmptyListException("No se encontro ningun pedido en ese rango de fechas");
+        return cantidadPedidos;
+    }
+
+    public TicketPromedioResponseDTO getTicketPromedioVentas(Integer anio, Integer mes){
+        TicketPromedioResponseDTO ticket = repository.getTicketPromedioVentas(anio, mes);
+        if(ticket.getCantidadPedidos() == 0)
+            throw new NoMatchingResultsException("No hubo ninguna venta en ese mes");
+        return ticket;
+    }
+
 
 }

@@ -6,6 +6,7 @@ import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.DireccionRepository;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +84,6 @@ public class DireccionService {
         DireccionEntity entity = getEntityById(id);
         repository.delete(entity);
     }
-
 
     ///----- Validations -----
 

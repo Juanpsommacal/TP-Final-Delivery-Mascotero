@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,44 +19,9 @@ public class OfertaController {
 
     private final OfertaService service;
 
-    // CREA OFERTA..
-    @PostMapping
-    public ResponseEntity<OfertaResponseDTO> createOferta(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
-        OfertaResponseDTO response = service.createOferta(requestDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @GetMapping
-    public ResponseEntity<List<OfertaResponseDTO>> getAll() {
-        return ResponseEntity.ok(service.getAll());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<OfertaResponseDTO> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getDTOById(id));
-    }
-
-    // GET OFERTAS ACTIVAS
-    @GetMapping("/activas")
-    public ResponseEntity<List<OfertaResponseDTO>> getAllActive() {
-        return ResponseEntity.ok(service.getAllActive());
-    }
-
-    // UPDATE OFERTA (NO AGREGA PRODUCTOS QUE YA POSEEN OFERTA)
-    @PutMapping("/{id}")
-    public ResponseEntity<OfertaResponseDTO> updateOferta(@PathVariable Long id,
-                                                          @Valid @RequestBody OfertaCreateRequestDTO request) {
-        return ResponseEntity.ok(service.updateOferta(id, request));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOferta(@PathVariable Long id) {
-        service.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
-
     //QUITA DE LA OFERTA UN SOLO PRODUCTO
-    @DeleteMapping("/{ofertaId}/producto/{productoId}")
+    @PatchMapping("/{ofertaId}/producto/{productoId}/remove")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OfertaResponseDTO> removeProductFromOffer(
             @PathVariable Long ofertaId,
             @PathVariable Long productoId) {
@@ -63,7 +29,51 @@ public class OfertaController {
         );
     }
 
+
+    // CREA OFERTA..
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<OfertaResponseDTO> createOferta(@Valid @RequestBody OfertaCreateRequestDTO requestDTO) {
+        OfertaResponseDTO response = service.createOferta(requestDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<OfertaResponseDTO>> getAll() {
+        return ResponseEntity.ok(service.getAll());
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<OfertaResponseDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getDTOById(id));
+    }
+
+    // GET OFERTAS ACTIVAS
+    @GetMapping("/activas")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<OfertaResponseDTO>> getAllActive() {
+        return ResponseEntity.ok(service.getAllActive());
+    }
+
+    // UPDATE OFERTA (NO AGREGA PRODUCTOS QUE YA POSEEN OFERTA)
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<OfertaResponseDTO> updateOferta(@PathVariable Long id,
+                                                          @Valid @RequestBody OfertaCreateRequestDTO request) {
+        return ResponseEntity.ok(service.updateOferta(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteOferta(@PathVariable Long id) {
+        service.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{ofertaId}/producto/{productoId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<OfertaResponseDTO> associateProduct(
             @PathVariable Long ofertaId,
             @PathVariable Long productoId) {
