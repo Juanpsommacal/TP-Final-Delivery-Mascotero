@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
+import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ClienteMapper;
@@ -81,6 +82,10 @@ public class ClienteService {
         ClienteEntity cliente = getEntityById(clienteId);
         DireccionEntity direccion = direccionMapper.toEntity(request);
 
+        if (hasDireccion(cliente, direccion)){
+            throw new ResourceAlreadyAssociatedException("El cliente ya tiene esa direccion asociada");
+        }
+
         cliente.getDirecciones().add(direccion);
         direccion.getClientes().add(cliente);
         direccionService.saveEntity(direccion);
@@ -101,6 +106,9 @@ public class ClienteService {
         //Recorre las direcciones del cliente y elimina solo si se encuentra el mismo ID que "direccionId"
         cliente.getDirecciones().removeIf(d -> d.getId().equals(direccionId));
 
+        //Tambien borramos la entidad de la BDD asi no queda huerfana
+        direccionService.deleteDireccion(direccionId);
+
         return mapper.toResponse(repository.save(cliente));
     }
 
@@ -115,11 +123,16 @@ public class ClienteService {
     public boolean hasDireccion(ClienteEntity cliente, DireccionEntity direccionParam){
         return cliente.getDirecciones().stream()
                 .anyMatch(direccionCliente ->
-                        direccionCliente.getCalle().equalsIgnoreCase(direccionParam.getCalle())
-                                && direccionCliente.getNumero().equals(direccionParam.getNumero())
+                            normalizar(direccionCliente.getCalle()).equals(normalizar(direccionParam.getCalle()))
+                                && Objects.equals(direccionCliente.getNumero(), direccionParam.getNumero())
                                 && Objects.equals(direccionCliente.getPiso(), direccionParam.getPiso())
-                                && Objects.equals(direccionCliente.getDepartamento(), direccionParam.getDepartamento())
+                                && normalizar(direccionCliente.getDepartamento()).equals(normalizar(direccionParam.getDepartamento()))
                 );
     }
 
+    // Se complementa con el metodo "hasDireccion" sirve para que cualquier String que se reciba se "normalice" a una forma unica
+    // si se recibe "Av. Luro   " y por otro lado "av.  luro", se normaliza a " av. luro", para que sean lo mismo
+    private String normalizar(String valor){
+        return valor == null ? "" : valor.trim().toLowerCase();
+    }
 }

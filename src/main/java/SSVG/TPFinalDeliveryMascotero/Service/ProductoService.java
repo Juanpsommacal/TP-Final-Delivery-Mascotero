@@ -35,5 +35,8 @@ public class ProductoService {
     public void saveEntity(ProductoEntity entity){
         repository.save(entity);
     }
-
+    public List<ProductoEntity> getAll2(){
+        return repository.findAll().stream()
+                .toList();
+    }
 }

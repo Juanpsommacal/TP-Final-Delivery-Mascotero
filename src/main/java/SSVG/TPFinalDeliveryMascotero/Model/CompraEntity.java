@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Model;
 
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoCompra;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,7 +34,7 @@ public class CompraEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private EstadoPedido estado;
+    private EstadoCompra estadoCompra;
 
     @Column(nullable = false)
     private BigDecimal montoTotal;

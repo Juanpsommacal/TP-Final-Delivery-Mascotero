@@ -14,6 +14,7 @@ import lombok.Setter;
 @Setter
 public class DetallePedidoCreateRequestDTO {
 
+    @Positive(message = "El ID del producto debe ser mayor a 0")
     @NotNull(message = "La id del producto no puede estar vacia")
     private Long productoId;
 

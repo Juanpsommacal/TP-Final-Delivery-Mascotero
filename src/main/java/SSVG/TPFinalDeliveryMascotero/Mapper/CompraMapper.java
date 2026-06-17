@@ -14,6 +14,11 @@ import java.util.List;
         uses = {DetalleCompraMapper.class, EnumMapper.class})
 public interface CompraMapper {
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "proveedor", ignore = true)
+    @Mapping(target = "fecha", ignore = true)
+    @Mapping(target = "estadoCompra", ignore = true)
+    @Mapping(target = "productos", ignore = true)
     public CompraEntity toEntity (CompraCreateRequestDTO request);
 
     //Con mapStruct podemos acceder a los atributos de los objetos que estan en nuestra entidad

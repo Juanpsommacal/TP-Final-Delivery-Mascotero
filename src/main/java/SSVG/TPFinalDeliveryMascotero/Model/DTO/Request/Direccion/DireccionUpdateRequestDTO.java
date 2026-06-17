@@ -15,6 +15,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class DireccionUpdateRequestDTO {
 
+    @Size(max = 30, message = "El nombre de la calle no puede exceder los 30 caracteres")
     private String calle;
 
     @PositiveOrZero(message = "El numero no puede ser negativo")

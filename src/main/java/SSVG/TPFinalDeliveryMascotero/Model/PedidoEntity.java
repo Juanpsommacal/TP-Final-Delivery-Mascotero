@@ -3,6 +3,7 @@ package SSVG.TPFinalDeliveryMascotero.Model;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,11 +40,15 @@ public class PedidoEntity {
     @Column(nullable = false)
     private BigDecimal montoTotal;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private EstadoPago estadoPago;
 
     @Column(nullable = false)
-    private String direccionCompleta;
+    private String calle;
+
+    @Column(nullable = false)
+    private Integer numero;
 
     private String pisoDepto;
 

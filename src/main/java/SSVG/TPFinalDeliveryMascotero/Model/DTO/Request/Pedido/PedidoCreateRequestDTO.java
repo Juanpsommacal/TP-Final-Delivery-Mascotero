@@ -2,12 +2,10 @@ package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.DetallePedido.DetallePedidoCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pago.PagoCreateRequestDTO;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +19,7 @@ import java.util.List;
 @Setter
 public class PedidoCreateRequestDTO {
 
+    @Positive(message = "El ID del cliente debe ser mayor a 0")
     @NotNull(message = "El cliente no puede estar vacio")
     private Long clienteId;
 
@@ -31,6 +30,4 @@ public class PedidoCreateRequestDTO {
     @NotEmpty(message = "El detalle del pedido no puede estar vacio")
     @Valid
     private List<DetallePedidoCreateRequestDTO> detalles;
-
-
 }

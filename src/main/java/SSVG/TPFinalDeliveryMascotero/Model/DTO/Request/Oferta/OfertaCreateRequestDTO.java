@@ -36,6 +36,9 @@ public class OfertaCreateRequestDTO {
     @FutureOrPresent(message = "La fecha de fin no puede ser una fecha anterior a la de inicio")
     private LocalDate fechaFin;
 
-    // Lista de IDs de productos asociados
-    private List<Long> productosIds;
+    @NotEmpty(message = "La lista de productos no puede estar vacia")
+    private List<@NotNull(message = "El ID del producto no puede estar vacio")
+                 @Positive(message = "El ID del producto debe ser mayor a 0")
+                 Long> productosIds;
+    // Se le ponen las dos validaciones adentro de la lista para que se le aplique a cada ID de producto
 }

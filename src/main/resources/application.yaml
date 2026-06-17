@@ -5,13 +5,17 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/delivery_mascotero
     username: root
-    password:
+    password: 3011
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
+
+jwt:
+  secret: Cl4v3S3cr3T4P4r4D3l1v3R1M4asc0T3r0EnBAse64Mg
+  expiration: 8600000

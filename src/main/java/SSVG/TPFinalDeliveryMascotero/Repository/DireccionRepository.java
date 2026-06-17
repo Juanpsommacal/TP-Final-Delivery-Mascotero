@@ -9,5 +9,4 @@ import java.util.List;
 @Repository
 public interface DireccionRepository extends JpaRepository<DireccionEntity, Long> {
 
-    List<DireccionEntity> findByCalleAndNumero(String calle, Integer numero);
 }

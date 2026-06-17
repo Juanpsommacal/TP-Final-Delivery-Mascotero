@@ -40,7 +40,4 @@ public class ClienteEntity {
 
     @OneToMany(mappedBy = "cliente")
     private List<PedidoEntity> pedidos = new ArrayList<>();
-
-    @OneToMany(mappedBy = "cliente")
-    private List<PagoEntity> pagos = new ArrayList<>();
 }

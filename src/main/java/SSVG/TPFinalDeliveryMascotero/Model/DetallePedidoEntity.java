@@ -26,6 +26,11 @@ public class DetallePedidoEntity {
 
     @Column(nullable = false)
     private BigDecimal precioUnitario;
+    // Precio original unitario
+
+    @Column(nullable = false)
+    private BigDecimal precioDescuento;
+    // Precio del producto unitario con el descuento aplicado
 
     private Double descuentoAplicado = null;
 

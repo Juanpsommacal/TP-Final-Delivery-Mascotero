@@ -30,5 +30,4 @@ public class DireccionCreateRequestDTO {
 
     @Size(max = 50, message = "Las observaciones no pueden exceder los 50 caracteres")
     private String observaciones;
-
 }
