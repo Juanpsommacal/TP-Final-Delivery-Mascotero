@@ -37,25 +37,17 @@ public class OfertaService {
 
         if (request.getProductosIds() != null && !request.getProductosIds().isEmpty()) {
 
-            List<ProductoEntity> productos =
-                    getValidProducts(request.getProductosIds());
+            List<ProductoEntity> productos = getValidProducts(request.getProductosIds());
 
             for (ProductoEntity producto : productos) {
-
-                ProductoEntity productoActual =
-                        productoService.getEntityById(producto.getId());
-
-                if (productoActual.getOferta() != null) {
+                if (producto.getOferta() != null) {
                     throw new ProductAlreadyHasOfferException(
-                            "El producto con ID "
-                                    + producto.getId()
-                                    + " ya tiene una oferta asociada."
+                            "El producto con ID " + producto.getId() + " ya tiene una oferta asociada."
                     );
                 }
             }
-
+            // Se hace la asociacion de los productos con la oferta creada
             associateProductsToOffer(productos, newOferta);
-            newOferta.setProductos(productos);
         }
 
         //Guardamos la oferta en el repo
@@ -64,14 +56,12 @@ public class OfertaService {
         return mapper.toResponse(savedOferta);
     }
 
-
     public List<OfertaResponseDTO> getAll() {
         return repository.findAll()
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
     }
-
 
     public OfertaEntity getEntityById(Long id) {
         return repository.findById(id)
@@ -83,6 +73,26 @@ public class OfertaService {
 
     public OfertaResponseDTO getDTOById(Long id){
         return mapper.toResponse(getEntityById(id));
+    }
+
+    public List<OfertaResponseDTO> getAllActive() {
+
+        LocalDate hoy = LocalDate.now();
+
+        List<OfertaResponseDTO> ofertasActivas = repository.findAll()
+                .stream()
+                .filter(oferta ->
+                        !hoy.isBefore(oferta.getFechaInicio()) &&
+                                !hoy.isAfter(oferta.getFechaFin())
+                )
+                .map(mapper::toResponse)
+                .toList();
+
+        if (ofertasActivas.isEmpty()) {
+            throw new EmptyListException("No existen ofertas activas.");
+        }
+
+        return ofertasActivas;
     }
 
     @Transactional
@@ -121,26 +131,8 @@ public class OfertaService {
         return mapper.toResponse(repository.save(oferta));
     }
 
-    public List<OfertaResponseDTO> getAllActive() {
-
-        LocalDate hoy = LocalDate.now();
-
-        List<OfertaResponseDTO> ofertasActivas = repository.findAll()
-                .stream()
-                .filter(oferta ->
-                        !hoy.isBefore(oferta.getFechaInicio()) &&
-                                !hoy.isAfter(oferta.getFechaFin())
-                )
-                .map(mapper::toResponse)
-                .toList();
-
-        if (ofertasActivas.isEmpty()) {
-            throw new EmptyListException("No existen ofertas activas.");
-        }
-
-        return ofertasActivas;
-    }
-
+    // Elimina la oferta completamente, y antes se le extraer la oferta de los productos
+    @Transactional
     public void deleteById(Long id) {
         OfertaEntity oferta = getEntityById(id);
 
@@ -149,30 +141,108 @@ public class OfertaService {
         repository.delete(oferta);
     }
 
+    ///----- Asociacion de Productos
+
+    @Transactional
+    public OfertaResponseDTO associatedProductToOffer(Long ofertaId, Long productoId) {
+
+        OfertaEntity oferta = getEntityById(ofertaId);
+
+        ProductoEntity producto = getValidProduct(productoId);
+
+        // Valido si la oferta del producto es "null"
+        if (producto.getOferta() != null) {
+            throw new ProductAlreadyHasOfferException("El producto ya tiene una oferta asignada.");
+        }
+
+        linkProductToOffer(producto, oferta);
+
+        productoService.saveEntity(producto);
+
+        return mapper.toResponse(repository.save(oferta));
+    }
+
+    // En este metodo se recorren todos los productos y se les asigna/asocia la oferta
+    private void associateProductsToOffer(List<ProductoEntity> productos, OfertaEntity oferta) {
+        productos.forEach(producto -> linkProductToOffer(producto, oferta));
+    }
+
+
+    private void linkProductToOffer(ProductoEntity producto, OfertaEntity oferta) {
+
+        if (oferta.getProductos() == null) {
+            oferta.setProductos(new ArrayList<>());
+        }
+
+        producto.setOferta(oferta);
+
+        if (!oferta.getProductos().contains(producto)) {
+            oferta.getProductos().add(producto);
+        }
+    }
+
+
+    ///----- Desasociar Producto de Oferta
+
+    // Le saca SOLO un producto especifico asociado a la oferta
+    @Transactional
+    public OfertaResponseDTO removeProductFromOffer(Long ofertaId, Long productoId) {
+
+        // Busca la oferta y valida que exista
+        OfertaEntity oferta = getEntityById(ofertaId);
+
+        // Busca el producto y valida que exista
+        ProductoEntity producto = productoService.getEntityById(productoId);
+
+        if (producto.getOferta() == null) {
+            throw new ResourceNotAssociatedException("El producto no tiene ninguna oferta asociada.");
+        }
+
+        if (!producto.getOferta().getId().equals(ofertaId)) {
+            throw new ResourceNotAssociatedException("El producto no pertenece a esta oferta.");
+        }
+
+        // Se le borra la asociacion de la oferta al producto, seteandole "null"
+        producto.setOferta(null);
+
+        if (oferta.getProductos() != null) {
+            oferta.getProductos().remove(producto);
+        }
+
+        productoService.saveEntity(producto);
+
+        return mapper.toResponse(repository.save(oferta));
+    }
+
     ///----- Validations
 
+    // Valida las fechas de inicio y fin de la oferta
     private void validateDates(LocalDate inicio, LocalDate fin) {
 
         LocalDate hoy = LocalDate.now();
 
+        // Validar que no se reciban "null" en ninguna de las fechas
         if (inicio == null || fin == null) {
             return;
         }
 
+        // Valida que la fecha de inicio de la oferta no sea para antes de la Fecha Actual (HOY)
         if (inicio.isBefore(hoy)) {
             throw new InvalidDateRangeException("La fecha de inicio de la oferta no puede ser anterior a la fecha actual");
         }
 
+        // Valida que la fecha de Fin de la oferta no este para una fecha anterior a la actual
         if (fin.isBefore(hoy)) {
             throw new InvalidDateRangeException("La fecha de fin de la oferta no puede ser anterior a la fecha actual");
         }
 
+        // Valida que la fecha de Fin de la oferta este planteada para antes de la Fecha de Inicio de la misma
         if (fin.isBefore(inicio)) {
             throw new InvalidDateRangeException("La fecha de fin de la oferta no puede ser antes de la fecha de inicio");
         }
     }
 
-
+    // Se busca un producto y se valida para saber si esta activo
     private ProductoEntity getValidProduct(Long id) {
         ProductoEntity producto = productoService.getEntityById(id);
 
@@ -190,93 +260,19 @@ public class OfertaService {
                 .toList();
     }
 
-    // En este metodo se recorren todos los productos y se les asigna/asocia la oferta
-    private void associateProductsToOffer(List<ProductoEntity> productos, OfertaEntity oferta) {
-        // Aca se hace la validacion para saber si la oferta ya tiene la lista de productos
-        // si no la tiene creada, se la crea
-        if (oferta.getProductos() == null){
-            oferta.setProductos(new ArrayList<>());
+    private void validateNotRepeatProduct(OfertaCreateRequestDTO request) {
+
+        // Se obtienen la cantidad de Productos Unicos de la request eliminando los repetidos
+        // para despues comparar con los que hay realmente en la request
+        long cantProductosUnicos = request.getProductosIds().stream()
+                .distinct()
+                .count();
+
+        // Si "cantProductosUnicos" = 2 y en la request original (sin eliminar los repetidos) habian 3 productoId
+        // tira excepcion que se repitieron los productos en la request
+        if (cantProductosUnicos != request.getProductosIds().size()){
+            throw new DuplicateResourceException("No se puede repetir el mismo Producto en una oferta");
         }
-
-        productos.forEach(producto -> {
-            producto.setOferta(oferta);
-            oferta.getProductos().add(producto);
-        });
-    }
-
-
-    @Transactional
-    public OfertaResponseDTO removeAllProductsFromOffer(Long ofertaId) {
-
-        OfertaEntity oferta = getEntityById(ofertaId);
-
-        clearProductsOffer(oferta);
-
-        OfertaEntity ofertaActualizada = repository.save(oferta);
-
-        return mapper.toResponse(ofertaActualizada);
-    }
-
-    @Transactional
-    public OfertaResponseDTO associateAllProductsToOffer(Long ofertaId) {
-
-        OfertaEntity oferta = getEntityById(ofertaId);
-
-        List<ProductoEntity> productos = productoService.getAll2();
-
-        if (oferta.getProductos() == null) {
-            oferta.setProductos(new ArrayList<>());
-        }
-
-        for (ProductoEntity producto : productos) {
-            // Se valida que el producto no este Inactivo, para no cargarle la oferta
-            if (!producto.getActivo()){
-                continue;
-            }
-
-            if (producto.getOferta() != null && !producto.getOferta().getId().equals(ofertaId)) {
-                continue;
-            }
-
-            producto.setOferta(oferta);
-
-            if (!oferta.getProductos().contains(producto)) {
-                oferta.getProductos().add(producto);
-            }
-        }
-
-        return mapper.toResponse(repository.save(oferta));
-    }
-
-    @Transactional
-    public OfertaResponseDTO removeProductFromOffer(
-            Long ofertaId,
-            Long productoId) {
-
-        OfertaEntity oferta = getEntityById(ofertaId);
-
-        ProductoEntity producto =
-                productoService.getEntityById(productoId);
-
-        if (producto.getOferta() == null) {
-            throw new ResourceNotFoundException(
-                    "El producto no tiene ninguna oferta asociada."
-            );
-        }
-
-        if (!producto.getOferta().getId().equals(ofertaId)) {
-            throw new ResourceNotFoundException(
-                    "El producto no pertenece a esta oferta."
-            );
-        }
-
-        producto.setOferta(null);
-
-        if (oferta.getProductos() != null) {
-            oferta.getProductos().remove(producto);
-        }
-
-        return mapper.toResponse(repository.save(oferta));
     }
 
     ///---- Funciones Utiles
@@ -293,42 +289,5 @@ public class OfertaService {
         }
     }
 
-    private void validateNotRepeatProduct(OfertaCreateRequestDTO request) {
 
-        // Se obtienen la cantidad de Productos Unicos de la request eliminando los repetidos
-        // para despues comparar con los que hay realmente en la request
-        long cantProductosUnicos = request.getProductosIds().stream()
-                .distinct()
-                .count();
-
-        // Si "cantProductosUnicos" = 2 y en la request original (sin eliminar los repetidos) habian 3 productoId
-        // tira excepcion que se repitieron los productos en la request
-        if (cantProductosUnicos != request.getProductosIds().size()){
-            throw new DuplicateResourceException("No se puede repetir el mismo Producto en el detalle de la ");
-        }
-    }
-
-    @Transactional
-    public OfertaResponseDTO associateProductToOffer(Long ofertaId, Long productoId) {
-
-        OfertaEntity oferta = getEntityById(ofertaId);
-
-        ProductoEntity producto = getValidProduct(productoId);
-
-        if (producto.getOferta() != null) {
-            throw new ProductAlreadyHasOfferException("El producto ya tiene una oferta asignada.");
-        }
-
-        producto.setOferta(oferta);
-
-        if (oferta.getProductos() == null) {
-            oferta.setProductos(new ArrayList<>());
-        }
-
-        if (!oferta.getProductos().contains(producto)) {
-            oferta.getProductos().add(producto);
-        }
-
-        return mapper.toResponse(repository.save(oferta));
-    }
 }

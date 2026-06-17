@@ -196,6 +196,7 @@ public class PedidoService {
         repository.save(pedido);
     }
 
+    // Sirve para registrar una Entrega de un pedido por ID
     @Transactional
     public PedidoResponseDTO deliverPedido(Long id){
         PedidoEntity pedido = getEntityById(id);
@@ -276,26 +277,27 @@ public class PedidoService {
             // Seria: "Si hoy NO esta antes de la fecha de Inicio de la oferta y Hoy no esta despues de la fecha de Fin"
     }
 
+    // Calcula el precio unitario final de un producto
     private BigDecimal calculateUnitPriceProducto(ProductoEntity producto){
 
-        BigDecimal originPrice = producto.getPrecio();
+        BigDecimal precioOriginal = producto.getPrecio();
 
         // Se valida que el producto tenga asociada una oferta y que este vigente
         if (!currentOferta(producto)){
-            return originPrice;
+            return precioOriginal;
         }
 
         // Se convierte el porcentaje de un Double a un BigDecimal que es mas preciso y se guarda
         BigDecimal porcentaje = BigDecimal.valueOf(producto.getOferta().getPorcentaje());
 
         // Se calcula el descuento del precio dependiendo el porcentaje de la oferta
-        BigDecimal discount = originPrice
+        BigDecimal descuento = precioOriginal
                 .multiply(porcentaje)
                 // Cuando se divide con BigDecimal te pide
                 // especificar por parametros: (por cuanto se divide (100), cuantos decimales dejo (2), como quiero redondear el resultado (HALF_UP)
                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
-        return originPrice.subtract(discount);
+        return precioOriginal.subtract(descuento);
     }
 
 }
