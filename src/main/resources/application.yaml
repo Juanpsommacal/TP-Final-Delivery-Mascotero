@@ -1,13 +1,10 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/delivery_mascotero2 #(Server local)
-    #url: jdbc:mysql://172.16.1.64:3306/tallerUtn_nombreAlumno #(Server UTN)
+    url: jdbc:mysql://localhost:3306/delivery_mascotero
 
-    username: root #(Server Local)
-    #username: bdd1 #(Server UTN)
+    username: root
 
-    password: 1234 #(Server Local)
-    #password: bdd1 #(Server UTN)
+    password:
 
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:

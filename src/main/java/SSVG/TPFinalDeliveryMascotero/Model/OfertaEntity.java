@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -38,6 +39,6 @@ public class OfertaEntity {
     private LocalDate fechaFin;
 
     @OneToMany(mappedBy = "oferta", cascade = CascadeType.ALL)
-    private List<ProductoEntity> productos;
+    private List<ProductoEntity> productos = new ArrayList<>();
 
 }

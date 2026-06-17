@@ -226,24 +226,29 @@ public class GlobalExceptionHandler {
 
 
         @ExceptionHandler(ProductAlreadyHasOfferException.class)
-        public ResponseEntity<?> handleProductAlreadyHasOffer(ProductAlreadyHasOfferException ex) {
+        public ResponseEntity<ErrorResponseDTO> handleProductAlreadyHasOfferException(ProductAlreadyHasOfferException ex) {
 
-            Map<String, Object> body = new HashMap<>();
+            ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                    LocalDateTime.now(),
+                    HttpStatus.CONFLICT.value(),
+                    HttpStatus.CONFLICT.name(),
+                    ex.getMessage()
+            );
 
-            body.put("error", "PRODUCT_ALREADY_HAS_OFFER");
-            body.put("message", ex.getMessage());
-            body.put("status", HttpStatus.CONFLICT.value());
-            body.put("timestamp", LocalDateTime.now());
-
-            return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
         }
 
     @ExceptionHandler(EmptyListException.class)
-    public ResponseEntity<String> handleEmptyListException(
-            EmptyListException ex) {
+    public ResponseEntity<ErrorResponseDTO> handleEmptyListException(EmptyListException ex) {
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.name(),
+                ex.getMessage()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
     /// Manejador de Exception.class
 

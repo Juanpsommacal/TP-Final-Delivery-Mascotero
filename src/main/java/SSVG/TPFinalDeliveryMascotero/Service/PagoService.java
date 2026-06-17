@@ -35,7 +35,7 @@ public class PagoService {
         // Valido que el pedido exista
         PedidoEntity pedido = pedidoService.getEntityById(request.getPedidoId());
 
-        // Se valida el Estado del Pedido, para saber si ya esta PAGADO o CANCELADO
+        // Se valida el Estado del Pago, para saber si ya esta PAGADO o CANCELADO
         validateOrderStatus(pedido);
 
         // Calculo cuanto se pago hasta momento

@@ -1,10 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
-import SSVG.TPFinalDeliveryMascotero.Exception.EmptyListException;
-import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ProductAlreadyHasOfferException;
-import SSVG.TPFinalDeliveryMascotero.Exception.InvalidDateRangeException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
+import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.OfertaMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Oferta.OfertaCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.OfertaResponseDTO;
@@ -30,14 +26,16 @@ public class OfertaService {
     @Transactional
     public OfertaResponseDTO createOferta(OfertaCreateRequestDTO request) {
 
+        // Se valida que no se pasen Productos repetidos en la request
+        validateNotRepeatProduct(request);
+
         //Validamos que la fecha de FIN de la oferta no sea antes que la de inicio
         validateDates(request.getFechaInicio(), request.getFechaFin());
 
         //Creamos la nueva oferta y le pasamos los datos del RequestDTO
         OfertaEntity newOferta = mapper.toEntity(request);
 
-        if (request.getProductosIds() != null &&
-                !request.getProductosIds().isEmpty()) {
+        if (request.getProductosIds() != null && !request.getProductosIds().isEmpty()) {
 
             List<ProductoEntity> productos =
                     getValidProducts(request.getProductosIds());
@@ -88,11 +86,13 @@ public class OfertaService {
     }
 
     @Transactional
-    public OfertaResponseDTO updateOffer(Long id, OfertaCreateRequestDTO request) {
+    public OfertaResponseDTO updateOferta(Long id, OfertaCreateRequestDTO request) {
+
+        // Vaidacion para que no se pasen productos repetidos en la request
+        validateNotRepeatProduct(request);
+        validateDates(request.getFechaInicio(), request.getFechaFin());
 
         OfertaEntity oferta = getEntityById(id);
-
-        validateDates(request.getFechaInicio(), request.getFechaFin());
 
         oferta.setNombre(request.getNombre());
         oferta.setDescripcion(request.getDescripcion());
@@ -106,13 +106,10 @@ public class OfertaService {
         // Verifica que los productos no pertenezcan a otra oferta
         for (ProductoEntity producto : productos) {
 
-            if (producto.getOferta() != null &&
-                    !producto.getOferta().getId().equals(oferta.getId())) {
+            if (producto.getOferta() != null && !producto.getOferta().getId().equals(oferta.getId())) {
 
                 throw new ProductAlreadyHasOfferException(
-                        "El producto con ID "
-                                + producto.getId()
-                                + " ya pertenece a otra oferta."
+                        "El producto con ID " + producto.getId() + " ya pertenece a otra oferta."
                 );
             }
         }
@@ -120,8 +117,6 @@ public class OfertaService {
         clearProductsOffer(oferta);
 
         associateProductsToOffer(productos, oferta);
-
-        oferta.setProductos(productos);
 
         return mapper.toResponse(repository.save(oferta));
     }
@@ -165,13 +160,11 @@ public class OfertaService {
         }
 
         if (inicio.isBefore(hoy)) {
-            throw new IllegalArgumentException
-                    ("La fecha de inicio de la oferta no puede ser anterior a la fecha actual");
+            throw new InvalidDateRangeException("La fecha de inicio de la oferta no puede ser anterior a la fecha actual");
         }
 
         if (fin.isBefore(hoy)) {
-            throw new IllegalArgumentException
-                    ("La fecha de fin de la oferta no puede ser anterior a la fecha actual");
+            throw new InvalidDateRangeException("La fecha de fin de la oferta no puede ser anterior a la fecha actual");
         }
 
         if (fin.isBefore(inicio)) {
@@ -199,22 +192,18 @@ public class OfertaService {
 
     // En este metodo se recorren todos los productos y se les asigna/asocia la oferta
     private void associateProductsToOffer(List<ProductoEntity> productos, OfertaEntity oferta) {
-        productos.forEach(producto -> producto.setOferta(oferta));
-    }
-
-    //
-
-    // Se hace la desasociacion de una Oferta y sus productos, para utilizar
-    // en los metodos de actualizacion y eliminacion de Ofertas
-    private void clearProductsOffer(OfertaEntity oferta){
-
-        // Aca se elimina la "relacion" entre una oferta y sus productos asociados,
-        // dejando a los productos con la oferta en "null"
-        if (oferta.getProductos() != null) {
-            oferta.getProductos().forEach(producto -> producto.setOferta(null));
-            oferta.getProductos().clear();
+        // Aca se hace la validacion para saber si la oferta ya tiene la lista de productos
+        // si no la tiene creada, se la crea
+        if (oferta.getProductos() == null){
+            oferta.setProductos(new ArrayList<>());
         }
+
+        productos.forEach(producto -> {
+            producto.setOferta(oferta);
+            oferta.getProductos().add(producto);
+        });
     }
+
 
     @Transactional
     public OfertaResponseDTO removeAllProductsFromOffer(Long ofertaId) {
@@ -229,32 +218,6 @@ public class OfertaService {
     }
 
     @Transactional
-    public OfertaResponseDTO associateProductToOffer(Long ofertaId, Long productoId) {
-
-        OfertaEntity oferta = getEntityById(ofertaId);
-
-        ProductoEntity producto = getValidProduct(productoId);
-
-        if (producto.getOferta() != null) {
-            throw new ProductAlreadyHasOfferException(
-                    "El producto ya tiene una oferta asignada."
-            );
-        }
-
-        producto.setOferta(oferta);
-
-        if (oferta.getProductos() == null) {
-            oferta.setProductos(new ArrayList<>());
-        }
-
-        if (!oferta.getProductos().contains(producto)) {
-            oferta.getProductos().add(producto);
-        }
-
-        return mapper.toResponse(repository.save(oferta));
-    }
-
-    @Transactional
     public OfertaResponseDTO associateAllProductsToOffer(Long ofertaId) {
 
         OfertaEntity oferta = getEntityById(ofertaId);
@@ -266,9 +229,12 @@ public class OfertaService {
         }
 
         for (ProductoEntity producto : productos) {
+            // Se valida que el producto no este Inactivo, para no cargarle la oferta
+            if (!producto.getActivo()){
+                continue;
+            }
 
-            if (producto.getOferta() != null &&
-                    !producto.getOferta().getId().equals(ofertaId)) {
+            if (producto.getOferta() != null && !producto.getOferta().getId().equals(ofertaId)) {
                 continue;
             }
 
@@ -313,5 +279,56 @@ public class OfertaService {
         return mapper.toResponse(repository.save(oferta));
     }
 
+    ///---- Funciones Utiles
 
+    // Se hace la desasociacion de una Oferta y sus productos, para utilizar
+    // en los metodos de actualizacion y eliminacion de Ofertas
+    private void clearProductsOffer(OfertaEntity oferta){
+
+        // Aca se elimina la "relacion" entre una oferta y sus productos asociados,
+        // dejando a los productos con la oferta en "null"
+        if (oferta.getProductos() != null) {
+            oferta.getProductos().forEach(producto -> producto.setOferta(null));
+            oferta.getProductos().clear();
+        }
+    }
+
+    private void validateNotRepeatProduct(OfertaCreateRequestDTO request) {
+
+        // Se obtienen la cantidad de Productos Unicos de la request eliminando los repetidos
+        // para despues comparar con los que hay realmente en la request
+        long cantProductosUnicos = request.getProductosIds().stream()
+                .distinct()
+                .count();
+
+        // Si "cantProductosUnicos" = 2 y en la request original (sin eliminar los repetidos) habian 3 productoId
+        // tira excepcion que se repitieron los productos en la request
+        if (cantProductosUnicos != request.getProductosIds().size()){
+            throw new DuplicateResourceException("No se puede repetir el mismo Producto en el detalle de la ");
+        }
+    }
+
+    @Transactional
+    public OfertaResponseDTO associateProductToOffer(Long ofertaId, Long productoId) {
+
+        OfertaEntity oferta = getEntityById(ofertaId);
+
+        ProductoEntity producto = getValidProduct(productoId);
+
+        if (producto.getOferta() != null) {
+            throw new ProductAlreadyHasOfferException("El producto ya tiene una oferta asignada.");
+        }
+
+        producto.setOferta(oferta);
+
+        if (oferta.getProductos() == null) {
+            oferta.setProductos(new ArrayList<>());
+        }
+
+        if (!oferta.getProductos().contains(producto)) {
+            oferta.getProductos().add(producto);
+        }
+
+        return mapper.toResponse(repository.save(oferta));
+    }
 }

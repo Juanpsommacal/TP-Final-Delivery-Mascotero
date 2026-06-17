@@ -19,8 +19,7 @@ public class OfertaController {
     private final OfertaService service;
 
     // QUITA TODOS LOS PRODUCTOS DE LA OFERTA..
-
-    @DeleteMapping("/{ofertaId}/delete-products")
+    @DeleteMapping("/{ofertaId}/deleteOferta-products")
     public ResponseEntity<OfertaResponseDTO> removeAllProductsFromOffer(
             @PathVariable Long ofertaId) {
 
@@ -74,12 +73,12 @@ public class OfertaController {
     // UPDATE OFERTA (NO AGREGA PRODUCTOS QUE YA POSEEN OFERTA)
     @PutMapping("/{id}")
     public ResponseEntity<OfertaResponseDTO> updateOferta(@PathVariable Long id,
-                                                          @RequestBody OfertaCreateRequestDTO request) {
-        return ResponseEntity.ok(service.updateOffer(id, request));
+                                                          @Valid @RequestBody OfertaCreateRequestDTO request) {
+        return ResponseEntity.ok(service.updateOferta(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOferta(@PathVariable Long id) {
         service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
