@@ -1,22 +1,17 @@
 package SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes;
 
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-
-@Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class VentasPorMesResponseDTO {
+@Getter
+@Setter
+public class CantidadPedidosPorEstadoResponseDTO {
 
-    private Integer anio;
-    private Integer mes;
-    private Long cantidadPedidos;
-    private BigDecimal montoTotal;
-
-
+    private EstadoPedido estado;
+    private Long cantidad;
 }

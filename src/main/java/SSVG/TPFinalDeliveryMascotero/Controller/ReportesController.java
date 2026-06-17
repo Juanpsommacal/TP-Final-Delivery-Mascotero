@@ -1,7 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
-import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorMesResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.*;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import SSVG.TPFinalDeliveryMascotero.Service.ReportesService;
@@ -50,14 +50,38 @@ public class ReportesController {
         return ResponseEntity.ok(service.getPedidosByEstadoPago(estado));
     }
 
+    @GetMapping("/buscar-cantidad-pedidos-por-estado-por-mes")
+    public ResponseEntity<List<CantidadPedidosPorEstadoResponseDTO>> getCantidadPedidosPorEstado(@RequestParam @NotNull(message = "El año es obligatorio") Integer anio,
+                                                                                                 @RequestParam @Min(1) @Max(12) @NotNull(message = "El mes debe ser entre 1 y 12") Integer mes){
+        return ResponseEntity.ok(service.getCantidadPedidosPorEstadoPorMes(anio, mes));
+    }
+
     /// ----- Busqueda de usuarios
 
     /// ----- Metricas
 
+    //Solo suma los pedidos que esten entregados y pagados
     @GetMapping("/calcular-total-ventas-por-mes")
     public ResponseEntity<VentasPorMesResponseDTO> getTotalVentasByMes(@RequestParam @NotNull(message = "El año es obligatorio") Integer anio,
                                                                          @RequestParam @Min(1) @Max(12) @NotNull(message = "El mes debe ser entre 1 y 12") Integer mes){
         return ResponseEntity.ok(service.getVentasByMes(anio, mes));
+    }
+
+    @GetMapping("/calcular-ventas-por-rango")
+    public ResponseEntity<VentasPorRangoResponseDTO> getVentasByRango(@RequestParam @NotNull(message = "La fecha de inicio es obligatoria") LocalDate fechaInicio,
+                                                                       @RequestParam @NotNull(message = "La fecha de fin es obligatoria") LocalDate fechaFin){
+        return ResponseEntity.ok(service.getVentasByRango(fechaInicio, fechaFin));
+    }
+
+    @GetMapping("/calcular-ticket-promedio-mes")
+    public ResponseEntity<TicketPromedioResponseDTO> getTicketPromedioVentas(@RequestParam @NotNull(message = "El año es obligatorio") Integer anio,
+                                                                             @RequestParam @Min(1) @Max(12) @NotNull(message = "El mes debe ser entre 1 y 12") Integer mes){
+        return ResponseEntity.ok(service.getTicketPromedioVentas(anio, mes));
+    }
+
+    @GetMapping("/buscar-top-5-mas-vendidos")
+    public ResponseEntity<List<ProductoMasVendidoResponseDTO>> getTop5ProductosMasVendidos(){
+        return ResponseEntity.ok(service.getTop5ProductosMasVendidos());
     }
 
 }

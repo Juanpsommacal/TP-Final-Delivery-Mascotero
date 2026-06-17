@@ -9,7 +9,10 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreate
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.PedidoCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.CantidadPedidosPorEstadoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.TicketPromedioResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorMesResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorRangoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetallePedidoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
@@ -231,10 +234,31 @@ public class PedidoService {
     public VentasPorMesResponseDTO  getPedidosByMes(Integer anio, Integer mes){
         Optional<VentasPorMesResponseDTO> ventasPorMes = repository.getVentasPorMes(anio, mes);
         if(ventasPorMes.isEmpty())
-            throw new EmptyListException("No se encontro ningun pedido en esa fecha");
+            throw new EmptyListException("No se encontro ningun pedido entregado y pagado en ese mes");
 
         return ventasPorMes.get();
+    }
 
+    public VentasPorRangoResponseDTO getVentasByRango(LocalDate fechaInicio, LocalDate fechaFin){
+        Optional<VentasPorRangoResponseDTO> ventasPorRango = repository.getVentasPorRango(fechaInicio, fechaFin);
+        if(ventasPorRango.isEmpty())
+            throw new EmptyListException("No se encontro ningun pedido entregado y pagado en ese rango de fechas");
+
+        return ventasPorRango.get();
+    }
+
+    public List<CantidadPedidosPorEstadoResponseDTO> getCantidadPedidosPorEstadoPorMes(Integer anio, Integer mes){
+        List<CantidadPedidosPorEstadoResponseDTO> cantidadPedidos = repository.getCantidadPedidosPorEstadoPorMes(anio, mes);
+        if(cantidadPedidos.isEmpty())
+            throw new EmptyListException("No se encontro ningun pedido en ese rango de fechas");
+        return cantidadPedidos;
+    }
+
+    public TicketPromedioResponseDTO getTicketPromedioVentas(Integer anio, Integer mes){
+        TicketPromedioResponseDTO ticket = repository.getTicketPromedioVentas(anio, mes);
+        if(ticket.getCantidadPedidos() == 0)
+            throw new NoMatchingResultsException("No hubo ninguna venta en ese mes");
+        return ticket;
     }
 
 

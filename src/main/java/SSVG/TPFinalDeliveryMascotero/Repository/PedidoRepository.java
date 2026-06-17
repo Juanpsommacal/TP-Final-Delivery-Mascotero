@@ -1,6 +1,9 @@
 package SSVG.TPFinalDeliveryMascotero.Repository;
 
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.CantidadPedidosPorEstadoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.TicketPromedioResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorMesResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorRangoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
@@ -44,6 +47,58 @@ public interface PedidoRepository extends JpaRepository<PedidoEntity, Long> {
             @Param("anio") Integer anio,
             @Param("mes") Integer mes
     );
+
+    @Query("""
+    SELECT new SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorRangoResponseDTO(
+        :fechaInicio,
+        :fechaFin,
+        COUNT(p),
+        SUM(p.montoTotal)
+    )
+    FROM PedidoEntity p
+    WHERE p.fecha BETWEEN :fechaInicio AND :fechaFin
+      AND p.estadoPedido = SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido.ENTREGADO
+      AND p.estadoPago = SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago.PAGADO
+""")
+    Optional<VentasPorRangoResponseDTO> getVentasPorRango(
+            @Param("fechaInicio") LocalDate fechaInicio,
+            @Param("fechaFin") LocalDate fechaFin
+    );
+
+    @Query("""
+    SELECT new SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.CantidadPedidosPorEstadoResponseDTO(
+        p.estadoPedido,
+        COUNT(p)
+    )
+    FROM PedidoEntity p
+    WHERE YEAR(p.fecha) = :anio
+      AND MONTH(p.fecha) = :mes
+    GROUP BY p.estadoPedido
+""")
+    List<CantidadPedidosPorEstadoResponseDTO> getCantidadPedidosPorEstadoPorMes(
+            @Param("anio") Integer anio,
+            @Param("mes") Integer mes
+    );
+
+    @Query("""
+    SELECT new SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.TicketPromedioResponseDTO(
+        :anio,
+        :mes,
+        COUNT(p),
+        SUM(p.montoTotal)
+    )
+    FROM PedidoEntity p
+    WHERE YEAR(p.fecha) = :anio
+      AND MONTH(p.fecha) = :mes
+      AND p.estadoPedido = SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido.ENTREGADO
+      AND p.estadoPago = SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago.PAGADO
+""")
+    TicketPromedioResponseDTO getTicketPromedioVentas(
+            @Param("anio") Integer anio,
+            @Param("mes") Integer mes
+    );
+
+
 
 }
 

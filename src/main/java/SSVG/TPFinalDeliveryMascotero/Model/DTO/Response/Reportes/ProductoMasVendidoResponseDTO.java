@@ -5,18 +5,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class VentasPorMesResponseDTO {
+@AllArgsConstructor
+public class ProductoMasVendidoResponseDTO {
 
-    private Integer anio;
-    private Integer mes;
-    private Long cantidadPedidos;
-    private BigDecimal montoTotal;
-
-
+    private Long productoId;
+    private String nombreProducto;
+    private Long cantidadVendida;
 }

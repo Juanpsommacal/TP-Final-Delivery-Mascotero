@@ -138,6 +138,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(NoMatchingResultsException.class)
+    public ResponseEntity<String> handleNoMatchingResultsException(NoMatchingResultsException ex){
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
+
     @ExceptionHandler(EmptyUpdateFieldException.class)
     public ResponseEntity<ErrorResponseDTO> handleEmptyUpdateFieldException(EmptyUpdateFieldException ex){
 
@@ -252,7 +259,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    //Manejador de Exception.class
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<ErrorResponseDTO> handleInsufficientStockException(InsufficientStockException ex){
 
@@ -333,7 +339,7 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
     @ExceptionHandler(InvalidRevokePrivilege.class)
-    public ResponseEntity<ErrorResponseDTO> handleInsufficientStockException(InvalidRevokePrivilege ex){
+    public ResponseEntity<ErrorResponseDTO> handleInvalidRevokePrivilege(InvalidRevokePrivilege ex){
         ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
@@ -342,6 +348,8 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
+
+
     /// Manejador de Exception.class
 
     @ExceptionHandler(Exception.class)

@@ -6,17 +6,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class VentasPorMesResponseDTO {
+public class VentasPorRangoResponseDTO {
 
-    private Integer anio;
-    private Integer mes;
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
     private Long cantidadPedidos;
-    private BigDecimal montoTotal;
-
-
+    private BigDecimal totalVentas;
 }
