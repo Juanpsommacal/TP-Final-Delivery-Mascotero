@@ -60,6 +60,14 @@ public class GlobalExceptionHandler {
                         + " debe ser de tipo "
                         + tipoEsperado;
 
+        if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
+            Object[] valores = ex.getRequiredType().getEnumConstants();
+
+            message = "El parámetro " + ex.getName()
+                    + " debe ser uno de estos valores: "
+                    + Arrays.toString(valores);
+        }
+
         ErrorResponseDTO errorResponse =
                 new ErrorResponseDTO(
                         LocalDateTime.now(),

@@ -2,6 +2,7 @@ package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,10 @@ public class ReportesService {
                 .stream()
                 .map(pedidoMapper::toResponse)
                 .toList();
+    }
+
+    public List<PedidoResponseDTO> getPedidosByEstado(EstadoPedido estado){
+
     }
 
 }

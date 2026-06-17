@@ -1,11 +1,9 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import SSVG.TPFinalDeliveryMascotero.Service.ReportesService;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -36,6 +34,11 @@ public class ReportesController {
     @GetMapping("/buscar-pedidos-por-fecha")
     public ResponseEntity<List<PedidoResponseDTO>> getPedidosByFecha(@RequestParam @NotNull(message = "La fecha no puede estar vacia")  LocalDate fecha){
         return ResponseEntity.ok(service.getPedidosByFecha(fecha));
+    }
+
+    @GetMapping("/buscar-pedidos-por-estado")
+    public ResponseEntity<List<PedidoResponseDTO>> getPedidosByEstado(@RequestParam @NotNull(message = "El estado no puede estar vacio") EstadoPedido estado){
+        return ResponseEntity.ok(service.getPedidosByEstado(estado));
     }
 
 }

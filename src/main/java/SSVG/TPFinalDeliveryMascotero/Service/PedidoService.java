@@ -221,4 +221,8 @@ public class PedidoService {
     public List<PedidoEntity> getPedidosByFecha(LocalDate fecha){
         return repository.findByFecha(fecha);
     }
+
+    public List<PedidoEntity> getPedidosByEstado(EstadoPedido estado){
+        return repository.findByEstadoPedido(estado);
+    }
 }
