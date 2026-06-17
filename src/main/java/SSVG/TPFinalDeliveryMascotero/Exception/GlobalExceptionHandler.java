@@ -312,18 +312,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
-    @ExceptionHandler(ResourceAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponseDTO> handleResourceNotFoundException(ResourceAlreadyExistsException ex){
 
-        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
-                LocalDateTime.now(),
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.name(),
-                ex.getMessage()
-        );
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
-    }
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDTO> handleBadCredentials(
             BadCredentialsException ex) {

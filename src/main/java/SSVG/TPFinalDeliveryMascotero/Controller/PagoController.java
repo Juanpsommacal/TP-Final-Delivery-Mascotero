@@ -20,20 +20,20 @@ public class PagoController {
     private final PagoService service;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','USER)")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<PagoResponseDTO> createPago(@Valid @RequestBody PagoCreateRequestDTO request){
         PagoResponseDTO response = service.createPago(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','USER)")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<PagoResponseDTO> getById(@PathVariable Long id) {
         PagoResponseDTO response = service.getDTOById(id);
         return ResponseEntity.ok(response);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','USER)")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @GetMapping("/cliente/{clienteId}")
     public ResponseEntity<List<PagoResponseDTO>> getByClienteId(@PathVariable Long clienteId){
         List<PagoResponseDTO> response = service.listPagosByClienteId(clienteId);
