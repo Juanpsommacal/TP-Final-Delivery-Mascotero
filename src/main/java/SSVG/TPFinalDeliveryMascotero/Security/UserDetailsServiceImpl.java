@@ -21,12 +21,15 @@ public class UserDetailsServiceImpl  implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UsuarioEntity userEntity = usuarioRepository.findByEmail(username).orElseThrow(()->new UsernameNotFoundException("El usuario: no existe"));
-        if(!userEntity.isActive()) throw new InactiveResourceException("el usuario no esta activo");
         String completeRole = "ROLE_".concat(userEntity.getRole().getRoleName().name());
        SimpleGrantedAuthority authorities = new SimpleGrantedAuthority(completeRole);
         return new User(
                 userEntity.getEmail(),
                 userEntity.getPassword(),
+                userEntity.isActive(),
+                true,
+                true,
+                true,
                 List.of(authorities)
         );
     }

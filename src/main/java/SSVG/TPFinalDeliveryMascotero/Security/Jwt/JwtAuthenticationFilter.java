@@ -42,7 +42,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
             writeUnauthorizedResponse(response,"Se  necesita token para continuar");
             return;
         }
