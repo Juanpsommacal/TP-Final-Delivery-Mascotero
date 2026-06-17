@@ -9,5 +9,4 @@ public class TpFinalDeliveryMascoteroApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TpFinalDeliveryMascoteroApplication.class, args);
 	}
-
 }

@@ -19,7 +19,7 @@ import lombok.Setter;
 @DiscriminatorValue("ANTIPULGAS")
 public class AntipulgasEntity extends ProductoEntity {
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     @Enumerated(EnumType.STRING)
     private TipoAnimal tipoAnimal;
 
@@ -29,7 +29,7 @@ public class AntipulgasEntity extends ProductoEntity {
     @Column(nullable = false)
     private Double kgMax;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 25)
     @Enumerated(EnumType.STRING)
     private TipoAntipulgas tipoAntipulgas;
 

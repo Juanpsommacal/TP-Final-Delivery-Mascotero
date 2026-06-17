@@ -22,9 +22,10 @@ public class OfertaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String nombre;
 
+    @Column(length = 100)
     private String descripcion;
 
     @Column(nullable = false)
@@ -36,7 +37,7 @@ public class OfertaEntity {
     @Column(nullable = false)
     private LocalDate fechaFin;
 
-    @OneToMany(mappedBy = "oferta", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "oferta")
     private List<ProductoEntity> productos;
 
 }

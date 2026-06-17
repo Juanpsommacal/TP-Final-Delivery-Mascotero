@@ -23,15 +23,15 @@ public class AlimentoEntity extends ProductoEntity {
     @Column(nullable = false)
     private Double peso;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 15)
     @Enumerated(EnumType.STRING)
     private UnidadMedida unidadMedida;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     @Enumerated(EnumType.STRING)
     private EtapaVida etapaVida;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     @Enumerated(EnumType.STRING)
     private TipoAnimal tipoAnimal;
 

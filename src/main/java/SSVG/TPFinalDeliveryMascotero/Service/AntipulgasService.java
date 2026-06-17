@@ -8,6 +8,8 @@ import SSVG.TPFinalDeliveryMascotero.Mapper.AntipulgasMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Antipulgas.AntipulgasCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Antipulgas.AntipulgasUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.AntipulgasResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAnimal;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAntipulgas;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AntipulgasEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.AntipulgasRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,8 @@ public class AntipulgasService {
     private final AntipulgasMapper mapper;
 
     public AntipulgasResponseDTO createAntipulgas(AntipulgasCreateRequestDTO request){
+        if(request.getKgMin() > request.getKgMax())
+            throw new InvalidWeightRangeException("El peso minimo no puede ser superior al peso maximo");
         AntipulgasEntity newAntipulgas = mapper.toEntity(request);
         return mapper.toResponse(repository.save(newAntipulgas));
     }
@@ -33,7 +37,7 @@ public class AntipulgasService {
         Optional<AntipulgasEntity> entity = repository.findById(id);
         if(entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("El antipulgas no existe");
+        else throw new ResourceNotFoundException("El antipulgas con la ID: " + id + " no existe");
     }
 
     public AntipulgasResponseDTO getDTOById(Long id){
@@ -115,7 +119,7 @@ public class AntipulgasService {
     private void updateSpecificFields(AntipulgasEntity entity, AntipulgasUpdateRequestDTO request){
         // Validacion de Tipo de Animal
         if (request.getTipoAnimal() != null){
-            entity.setTipoAnimal(request.getTipoAnimal());
+            entity.setTipoAnimal(TipoAnimal.valueOf(request.getTipoAnimal().toUpperCase()));
         }
         // Validacion de el Peso Minimo recibido
         if (request.getKgMin() != null){
@@ -127,7 +131,7 @@ public class AntipulgasService {
         }
         // Validacion del Tipo de Antipulgas
         if (request.getTipoAntipulgas() != null){
-            entity.setTipoAntipulgas(request.getTipoAntipulgas());
+            entity.setTipoAntipulgas(TipoAntipulgas.valueOf(request.getTipoAntipulgas().toUpperCase()));
         }
     }
 

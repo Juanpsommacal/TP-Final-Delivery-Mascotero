@@ -6,14 +6,15 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Mapper(componentModel = "spring")
 public interface DetallePedidoMapper {
 
-    @Mapping(
-            target = "precioTotal" ,
-            expression = "java(calcularPrecioTotal(entity))"
-    )
+//    @Mapping(
+//            target = "precioTotal" ,
+//            expression = "java(calcularPrecioTotal(entity))"
+//    )
     @Mapping(
             target = "nombreProducto",
             expression = "java(getNombreProductoCompleto(entity))"
@@ -28,17 +29,23 @@ public interface DetallePedidoMapper {
     )
     public DetallePedidoResponseDTO toResponse (DetallePedidoEntity entity);
 
-    default BigDecimal calcularPrecioTotal(DetallePedidoEntity entity) {
-        BigDecimal precioTotal;
-        precioTotal = entity.getPrecioUnitario().multiply(BigDecimal.valueOf(entity.getCantidad()));
-        if(entity.getDescuentoAplicado() != null){
-            precioTotal = precioTotal.multiply(BigDecimal.valueOf(1.00 - entity.getDescuentoAplicado() / 100));
+    // Se calcula el Precio final que le va a quedar al producto dependiendo si tiene o no una oferta asignada
+    default BigDecimal calcularPrecioFinalProducto(DetallePedidoEntity entity) {
+        BigDecimal precioOriginal = entity.getPrecioUnitario();
+
+        if(entity.getDescuentoAplicado() == null || entity.getDescuentoAplicado() <= 0){
+            return precioOriginal;
         }
-        return precioTotal;
+
+        BigDecimal porcentaje = BigDecimal.valueOf(entity.getDescuentoAplicado());
+
+        BigDecimal descuento = precioOriginal.multiply(porcentaje.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP));
+
+        return precioOriginal.subtract(descuento);
     }
 
     default BigDecimal calcularSubTotal(DetallePedidoEntity entity){
-        return entity.getPrecioUnitario().multiply(BigDecimal.valueOf(entity.getCantidad()));
+        return calcularPrecioFinalProducto(entity).multiply(BigDecimal.valueOf(entity.getCantidad()));
     }
 
     default String getNombreProductoCompleto(DetallePedidoEntity entity){

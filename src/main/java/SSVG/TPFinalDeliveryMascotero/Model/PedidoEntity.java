@@ -3,6 +3,7 @@ package SSVG.TPFinalDeliveryMascotero.Model;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,18 +34,23 @@ public class PedidoEntity {
     private LocalDate fecha;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private EstadoPedido estadoPedido;
 
     @Column(nullable = false)
     private BigDecimal montoTotal;
 
-    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private EstadoPago estadoPago;
 
-    @ManyToOne
-    @JoinColumn(name = "direccion_id")
-    private DireccionEntity direccion;
+    @Column(nullable = false)
+    private String calle;
+
+    @Column(nullable = false)
+    private Integer numero;
+
+    private String pisoDepto;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedidoEntity> productos = new ArrayList<>();

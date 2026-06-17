@@ -33,6 +33,9 @@ public interface DireccionMapper {
         if (entity.getPiso() == null){
             return "Depto: " + entity.getDepartamento();
         }
+        if (entity.getDepartamento() == null || entity.getDepartamento().isBlank()){
+            return "Piso: " + entity.getPiso();
+        }
         return "Piso: " + entity.getPiso() + " | Depto: " + entity.getDepartamento();
     }
 

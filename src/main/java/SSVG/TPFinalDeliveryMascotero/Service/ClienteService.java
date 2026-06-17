@@ -5,17 +5,20 @@ import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyAssociatedExceptio
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ClienteMapper;
+import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteUpdateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.ClienteRepository;
-import SSVG.TPFinalDeliveryMascotero.Repository.DireccionRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class ClienteService {
 
     private final ClienteRepository repository;
     private final DireccionService direccionService;
+    private final DireccionMapper direccionMapper;
     private final ClienteMapper mapper;
 
     public ClienteResponseDTO createCliente(ClienteCreateRequestDTO request){
@@ -35,7 +39,7 @@ public class ClienteService {
         Optional<ClienteEntity> entity = repository.findById(id);
         if (entity.isPresent())
             return entity.get();
-        else throw new ResourceNotFoundException("El cliente no existe");
+        else throw new ResourceNotFoundException("El cliente con la ID: " + id + " no existe");
     }
 
     public ClienteResponseDTO getDTOById(Long id){
@@ -71,17 +75,20 @@ public class ClienteService {
         return mapper.toResponse(repository.save(entity));
     }
 
-    // Asociar una direccion a un Cliente
-    public ClienteResponseDTO associateDireccion(Long clienteId, Long direccionId) {
+    // Crea y Asocia una direccion a un Cliente
+    @Transactional
+    public ClienteResponseDTO associateDireccion(Long clienteId, DireccionCreateRequestDTO request){
+
         ClienteEntity cliente = getEntityById(clienteId);
+        DireccionEntity direccion = direccionMapper.toEntity(request);
 
-        DireccionEntity direccion = direccionService.getEntityById(direccionId);
-
-        if (isAssociated(cliente, direccionId)) {
-            throw new ResourceAlreadyAssociatedException("La direccion ya esta asociada al cliente");
+        if (hasDireccion(cliente, direccion)){
+            throw new ResourceAlreadyAssociatedException("El cliente ya tiene esa direccion asociada");
         }
 
         cliente.getDirecciones().add(direccion);
+        direccion.getClientes().add(cliente);
+        direccionService.saveEntity(direccion);
 
         return mapper.toResponse(repository.save(cliente));
     }
@@ -99,6 +106,9 @@ public class ClienteService {
         //Recorre las direcciones del cliente y elimina solo si se encuentra el mismo ID que "direccionId"
         cliente.getDirecciones().removeIf(d -> d.getId().equals(direccionId));
 
+        //Tambien borramos la entidad de la BDD asi no queda huerfana
+        direccionService.deleteDireccion(direccionId);
+
         return mapper.toResponse(repository.save(cliente));
     }
 
@@ -110,4 +120,19 @@ public class ClienteService {
                 .anyMatch(d -> d.getId().equals(direccionId));
     }
 
+    public boolean hasDireccion(ClienteEntity cliente, DireccionEntity direccionParam){
+        return cliente.getDirecciones().stream()
+                .anyMatch(direccionCliente ->
+                            normalizar(direccionCliente.getCalle()).equals(normalizar(direccionParam.getCalle()))
+                                && Objects.equals(direccionCliente.getNumero(), direccionParam.getNumero())
+                                && Objects.equals(direccionCliente.getPiso(), direccionParam.getPiso())
+                                && normalizar(direccionCliente.getDepartamento()).equals(normalizar(direccionParam.getDepartamento()))
+                );
+    }
+
+    // Se complementa con el metodo "hasDireccion" sirve para que cualquier String que se reciba se "normalice" a una forma unica
+    // si se recibe "Av. Luro   " y por otro lado "av.  luro", se normaliza a " av. luro", para que sean lo mismo
+    private String normalizar(String valor){
+        return valor == null ? "" : valor.trim().toLowerCase();
+    }
 }
