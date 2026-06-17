@@ -86,15 +86,34 @@ public class PedidoService {
         newPedido.setFecha(LocalDate.now());
         newPedido.setEstadoPedido(EstadoPedido.PENDIENTE);
         newPedido.setEstadoPago(EstadoPago.PENDIENTE);
-        newPedido.setDireccionCompleta(formatearDireccionCompleta(direccionRequest));
+        newPedido.setCalle(direccionRequest.getCalle());
+        newPedido.setNumero(direccionRequest.getNumero());
         newPedido.setPisoDepto(formatearPisoDepto(direccionRequest));
 
-        //Calculamos el precio total del pedido
-        BigDecimal montoTotal = request.getDetalles()
+        //Creamos la lista de detallePedidoEntity para obtener los precios con descuentos
+        List<DetallePedidoEntity> detalles = request.getDetalles()
                 .stream()
-                .map(detalle ->
-                        productoService.getEntityById(detalle.getProductoId())
-                                .getPrecio().multiply(BigDecimal.valueOf(detalle.getCantidad())))
+                //Transformamos a producto
+                .map(requestDetalle -> {
+
+                    ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
+
+                    //Creamos los detallePedidoEntity y seteamos los atributos.
+                    //Aca nos falta la ID del pedido. Todavia no la tenemos disponible
+                    DetallePedidoEntity newDetalle = new DetallePedidoEntity();
+                    newDetalle.setCantidad(requestDetalle.getCantidad());
+                    newDetalle.setPrecioUnitario(producto.getPrecio());
+                    if(producto.getOferta() != null)
+                        newDetalle.setDescuentoAplicado(producto.getOferta().getPorcentaje());
+                    newDetalle.setProducto(producto);
+                    return newDetalle;
+                })
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        //Calculamos el precio total del pedido desde el detallePedido
+        BigDecimal montoTotal = detalles
+                .stream()
+                .map(this::calcularPrecioTotal)
                 //acumulamos para obtener el total
                 .reduce(BigDecimal.ZERO,
                         BigDecimal::add);
@@ -113,27 +132,10 @@ public class PedidoService {
         //Guardamos el pedido asi nos da la ID
         PedidoEntity savedPedido = repository.save(newPedido);
 
-        //Ahora creamos la lista de detallePedidoEntity
-        List<DetallePedidoEntity> detalles = request.getDetalles()
-                .stream()
-                //Transformamos a producto
-                .map(requestDetalle -> {
+        //Seteamos la ID del pedido en los detalles
+        detalles.forEach(detalle -> detalle.setPedido(savedPedido));
 
-                    ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
-
-                    //Creamos los detallePedidoEntity y seteamos los atributos
-                    DetallePedidoEntity newDetalle = new DetallePedidoEntity();
-                    newDetalle.setCantidad(requestDetalle.getCantidad());
-                    newDetalle.setPrecioUnitario(producto.getPrecio());
-                    if(producto.getOferta() != null)
-                        newDetalle.setDescuentoAplicado(producto.getOferta().getPorcentaje());
-                    newDetalle.setPedido(savedPedido);
-                    newDetalle.setProducto(producto);
-                    return newDetalle;
-                })
-                .collect(Collectors.toCollection(ArrayList::new));
-
-        //Seteamos el detalle dentro del pedido
+        //Seteamos los detalles dentro del pedido
         savedPedido.setProductos(detalles);
 
         //Guardamos en el repo y devolvemos el DTO de response
@@ -180,11 +182,17 @@ public class PedidoService {
         repository.save(pedido);
     }
 
-    /// ----- Formateo -----
+    /// ----- Utiles -----
 
-    private String formatearDireccionCompleta(DireccionEntity direccion) {
-        return direccion.getCalle() + " " + direccion.getNumero();
+    private BigDecimal calcularPrecioTotal(DetallePedidoEntity entity) {
+        BigDecimal subTotal = entity.getPrecioUnitario().multiply(BigDecimal.valueOf(entity.getCantidad()));
+        if(entity.getDescuentoAplicado() != null){
+            subTotal = subTotal.multiply(BigDecimal.valueOf(1.00 - entity.getDescuentoAplicado() / 100));
+        }
+        return subTotal;
     }
+
+    /// ----- Formateo -----
 
     private String formatearPisoDepto(DireccionEntity direccion) {
         if (direccion.getPiso() == null && direccion.getDepartamento() == null) {
@@ -203,4 +211,14 @@ public class PedidoService {
                 + " | Depto: " + direccion.getDepartamento();
     }
 
+
+    /// ----- Busqueda en BDD -----
+
+    public List<PedidoEntity> getPedidosByDireccion(String calle, Integer numero){
+        return repository.findByCalleIgnoreCaseAndNumero(calle, numero);
+    }
+
+    public List<PedidoEntity> getPedidosByFecha(LocalDate fecha){
+        return repository.findByFecha(fecha);
+    }
 }

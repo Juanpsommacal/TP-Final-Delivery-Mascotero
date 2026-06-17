@@ -16,7 +16,6 @@ import java.util.List;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
-    //agregar endpoint de dar de baja un usuario
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
