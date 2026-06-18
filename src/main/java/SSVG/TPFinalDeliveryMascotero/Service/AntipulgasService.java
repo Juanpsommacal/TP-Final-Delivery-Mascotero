@@ -119,7 +119,7 @@ public class AntipulgasService {
     private void updateSpecificFields(AntipulgasEntity entity, AntipulgasUpdateRequestDTO request){
         // Validacion de Tipo de Animal
         if (request.getTipoAnimal() != null){
-            entity.setTipoAnimal(TipoAnimal.valueOf(request.getTipoAnimal().toUpperCase()));
+            entity.setTipoAnimal(TipoAnimal.valueOf(request.getTipoAnimal().trim().toUpperCase()));
         }
         // Validacion de el Peso Minimo recibido
         if (request.getKgMin() != null){
@@ -131,7 +131,7 @@ public class AntipulgasService {
         }
         // Validacion del Tipo de Antipulgas
         if (request.getTipoAntipulgas() != null){
-            entity.setTipoAntipulgas(TipoAntipulgas.valueOf(request.getTipoAntipulgas().toUpperCase()));
+            entity.setTipoAntipulgas(TipoAntipulgas.valueOf(request.getTipoAntipulgas().trim().toUpperCase()));
         }
     }
 

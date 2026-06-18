@@ -15,6 +15,8 @@ import java.util.List;
 @Setter
 public class CompraResponseDTO {
 
+    private Long id;
+
     private LocalDate fecha;
 
     private String nombreProveedor;

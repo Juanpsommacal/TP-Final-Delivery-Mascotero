@@ -10,6 +10,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = {EnumMapper.class})
 public interface PagoMapper {
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "pedido", ignore = true)
+    @Mapping(target = "fecha", ignore = true)
+    @Mapping(target = "metodoPago", ignore = true)
     public PagoEntity toEntity(PagoCreateRequestDTO request);
 
     @Mapping(target = "pedidoId", source = "pedido.id")

@@ -45,7 +45,7 @@ public interface DetallePedidoMapper {
     }
 
     default BigDecimal calcularSubTotal(DetallePedidoEntity entity){
-        return calcularPrecioFinalProducto(entity).multiply(BigDecimal.valueOf(entity.getCantidad()));
+        return calcularPrecioFinalProducto(entity).multiply(BigDecimal.valueOf(entity.getCantidad()).setScale(2, RoundingMode.HALF_UP));
     }
 
     default String getNombreProductoCompleto(DetallePedidoEntity entity){
