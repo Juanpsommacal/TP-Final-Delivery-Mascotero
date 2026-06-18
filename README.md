@@ -161,7 +161,7 @@ Proyecto desarrollado por Juan Pablo Sommacal, Juan Jose Stachelski, Matias Vega
 Link al DER
 https://miro.com/app/board/uXjVHZoWnwM=/?share_link_id=764926157389
 
-Flujo para probar la App
+## 🐾 Flujo para probar la App
 
 -Primero registrar un usuario
 -Login de ese usuario
