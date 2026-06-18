@@ -157,3 +157,17 @@ Controller
 ## 👨‍💻 Autores
 
 Proyecto desarrollado por Juan Pablo Sommacal, Juan Jose Stachelski, Matias Vega y Matias Garcia como práctica integral de desarrollo Backend utilizando Spring Boot.
+
+Link al DER
+https://miro.com/app/board/uXjVHZoWnwM=/?share_link_id=764926157389
+
+Flujo para probar la App
+
+-Primero registrar un usuario
+-Login de ese usuario
+-Crear productos, clientes o proveedores
+-Para asociar una direccion a un cliente, el cliente ya debe estar creado
+-Para hacer un pedido ya tiene que haber productos cargados y minimo un cliente con su direccion asociada
+-Para hacer un pedido a proveedor tiene que haber productos cargados
+-Los pedidos solo se pueden cancelar si no estan entregados ni pagados
+-Los pedidos se pueden entregar y el cliente pagarlo despues. (Osea es posible tener clientes con deuda)
