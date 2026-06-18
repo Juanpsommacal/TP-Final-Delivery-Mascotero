@@ -43,7 +43,7 @@ public class UsuarioService {
     {
         UsuarioEntity user = usuarioRepository.findById(idUsuario).orElseThrow(()-> new ResourceNotFoundException("Usuario con id: " + idUsuario +" no existe"));
         if(user.getRole().getRoleName().equals(RoleType.USER)) throw  new InvalidResourceStateException("EL usuario ya posee el rol mas bajo");
-        RoleEntity role = roleService.findByRoleName(RoleType.ADMIN);
+        RoleEntity role = roleService.findByRoleName(RoleType.USER);
         minimoDeAdmin(role.getId());
         user.setRole(roleService.findByRoleName(RoleType.USER));
         return usuarioMapper.toResponse(usuarioRepository.save(user));
