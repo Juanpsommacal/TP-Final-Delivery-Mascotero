@@ -110,13 +110,13 @@ public class AlimentoService {
             entity.setPeso(request.getPeso());
         }
         if (request.getUnidadMedida() != null){
-            entity.setUnidadMedida(UnidadMedida.valueOf(request.getUnidadMedida().toUpperCase()));
+            entity.setUnidadMedida(UnidadMedida.valueOf(request.getUnidadMedida().trim().toUpperCase()));
         }
         if (request.getEtapaVida() != null){
-            entity.setEtapaVida(EtapaVida.valueOf(request.getEtapaVida().toUpperCase()));
+            entity.setEtapaVida(EtapaVida.valueOf(request.getEtapaVida().trim().toUpperCase()));
         }
         if (request.getTipoAnimal() != null){
-            entity.setTipoAnimal(TipoAnimal.valueOf(request.getTipoAnimal().toUpperCase()));
+            entity.setTipoAnimal(TipoAnimal.valueOf(request.getTipoAnimal().trim().toUpperCase()));
         }
     }
 

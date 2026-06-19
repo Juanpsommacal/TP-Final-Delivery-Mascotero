@@ -105,7 +105,8 @@ public class PedidoService {
 
                         return precioConDescuento.multiply(BigDecimal.valueOf(detalle.getCantidad()));
                 })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
 
         //Descontamos el stock de los productos
         request.getDetalles()
@@ -178,7 +179,7 @@ public class PedidoService {
                 .toList();
     }
 
-    /// ----- Updates / Delete -----
+    /// ----- Delete -----
 
     // Cancelar Pedido
     public void deleteById(Long id){
@@ -186,6 +187,14 @@ public class PedidoService {
         //Verificamos que el pedido no este cancelado
         if(pedido.getEstadoPedido().equals(EstadoPedido.CANCELADO)) {
             throw new InactiveResourceException("El pedido con la ID: " + id + " ya fue cancelado");
+        }
+
+        if (pedido.getEstadoPedido() != EstadoPedido.PENDIENTE){
+            throw new InvalidResourceStateException("Solo se pueden cancelar pedidos con estado pendiente");
+        }
+
+        if (pedido.getEstadoPago() != EstadoPago.PENDIENTE){
+            throw new InvalidResourceStateException("Solo se pueden cancelar pedidos con estado de pago pendiente");
         }
         //Recorremos el detalle de productos y devolvemos el stock
         pedido.getProductos()
@@ -195,8 +204,9 @@ public class PedidoService {
                     productoService.saveEntity(producto);
                 });
 
-        //Seteamos el pedido como CANCELADO
+        //Seteamos el pedido como CANCELADO y el estado del pago queda anulado porque el pedido se cancelo
         pedido.setEstadoPedido(EstadoPedido.CANCELADO);
+        pedido.setEstadoPago(EstadoPago.PEDIDO_CANCELADO);
 
         //Guardamos en el repo
         repository.save(pedido);
@@ -257,7 +267,7 @@ public class PedidoService {
         }
     }
 
-    // Devuelve true si la oferta asociada al producto esta vigente // false si la oferta se vencio o no tiene oferta asociada
+    // Se usa para saber si el producto tiene una oferta asociada y si esa oferta esta vigente actualmente
     private boolean currentOferta(ProductoEntity producto){
 
         // Se valida que el producto tenga alguna oferta asociada (producto.getOferta == null)
@@ -289,7 +299,7 @@ public class PedidoService {
             return precioOriginal;
         }
 
-        // Se convierte el porcentaje de un Double a un BigDecimal que es mas preciso y se guarda
+        // Se convierte el porcentaje de un Double a un BigDecimal que es mas preciso
         BigDecimal porcentaje = BigDecimal.valueOf(producto.getOferta().getPorcentaje());
 
         // Se calcula el descuento del precio dependiendo el porcentaje de la oferta

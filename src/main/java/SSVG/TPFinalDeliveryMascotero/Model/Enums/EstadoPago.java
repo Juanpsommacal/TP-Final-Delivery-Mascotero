@@ -4,5 +4,6 @@ public enum EstadoPago {
     PENDIENTE,
     DEUDA,
     DEUDA_PARCIAL,
-    PAGADO
+    PAGADO,
+    PEDIDO_CANCELADO
 }

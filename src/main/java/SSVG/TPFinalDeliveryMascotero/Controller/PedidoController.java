@@ -46,6 +46,7 @@ public class PedidoController {
     }
 
     @PatchMapping("/{id}/entregar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<PedidoResponseDTO> deliverPedido(@PathVariable Long id){
         return ResponseEntity.ok(service.deliverPedido(id));
     }
