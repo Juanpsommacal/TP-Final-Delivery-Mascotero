@@ -17,6 +17,8 @@ public class ProductoResponseDTO {
 
     private BigDecimal precio;
 
+    private BigDecimal precioOferta;
+
     private Integer stock;
 
     private String marca;

@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Mapper;
 
 import SSVG.TPFinalDeliveryMascotero.Mapper.Helper.EnumMapper;
+import SSVG.TPFinalDeliveryMascotero.Mapper.Helper.PrecioOfertaHelper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AlimentoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.Categorias.AntipulgasEntity;
@@ -8,12 +9,13 @@ import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = {PrecioOfertaHelper.class})
 public interface ProductoMapper {
 
     @Mapping(
             target = "tipoProducto",
             expression = "java(getTipoProducto(entity))")
+    @Mapping(target = "precioOferta", expression = "java(PrecioOfertaHelper.calcularPrecioOferta(entity))")
     public ProductoResponseDTO toResponse(ProductoEntity entity);
 
     default String getTipoProducto(ProductoEntity entity) {

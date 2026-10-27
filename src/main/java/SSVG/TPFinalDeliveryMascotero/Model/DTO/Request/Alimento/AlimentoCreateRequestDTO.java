@@ -49,6 +49,7 @@ public class AlimentoCreateRequestDTO {
     @ValidEnum(enumClass = UnidadMedida.class, message = "La unidad de medida debe ser GRAMOS o KILOGRAMOS")
     private String unidadMedida;
 
+    @NotNull(message = "La etapa de vida no puede estar vacia")
     @Size(max = 10, message = "La etapa de vida no puede exceder los 10 caracteres")
     @ValidEnum(enumClass = EtapaVida.class, message = "La etapa de vida debe ser CACHORRO, ADULTO o GERONTE")
     private String etapaVida;

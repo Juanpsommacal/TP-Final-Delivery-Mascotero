@@ -20,7 +20,7 @@ public class ProductoService {
     private final ProductoMapper mapper;
 
     public List<ProductoResponseDTO> getAll(){
-        return repository.findAll().stream()
+        return repository.findByActivoTrue().stream()
                 .map(mapper::toResponse)
                 .toList();
     }
