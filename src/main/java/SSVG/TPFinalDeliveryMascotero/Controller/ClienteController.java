@@ -35,6 +35,13 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.associateDireccion(clienteId, request));
     }
 
+    @PostMapping("/{clienteId}/direcciones/{direccionId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<ClienteResponseDTO> associateDireccionExistente(@PathVariable Long clienteId,
+                                                                          @PathVariable Long direccionId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.associateDireccionExistente(clienteId, direccionId));
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<ClienteResponseDTO>> getAll(){

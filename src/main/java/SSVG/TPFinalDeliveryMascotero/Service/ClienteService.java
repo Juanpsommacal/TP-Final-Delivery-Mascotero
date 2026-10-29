@@ -93,11 +93,29 @@ public class ClienteService {
         return mapper.toResponse(repository.save(cliente));
     }
 
+    // Asocia a un Cliente una direccion que ya existe en la BDD (ej: dos clientes que viven en el mismo lugar)
+    @Transactional
+    public ClienteResponseDTO associateDireccionExistente(Long clienteId, Long direccionId){
+
+        ClienteEntity cliente = getEntityById(clienteId);
+        DireccionEntity direccion = direccionService.getEntityById(direccionId);
+
+        if (isAssociated(cliente, direccionId) || hasDireccion(cliente, direccion)){
+            throw new ResourceAlreadyAssociatedException("El cliente ya tiene esa direccion asociada");
+        }
+
+        cliente.getDirecciones().add(direccion);
+        direccion.getClientes().add(cliente);
+
+        return mapper.toResponse(repository.save(cliente));
+    }
+
     // Desvincular la direccion de un cliente por ID
+    @Transactional
     public ClienteResponseDTO dissociateDireccion(Long clienteId, Long direccionId) {
         ClienteEntity cliente = getEntityById(clienteId);
 
-        direccionService.getEntityById(direccionId);
+        DireccionEntity direccion = direccionService.getEntityById(direccionId);
 
         if (!isAssociated(cliente, direccionId)) {
             throw new ResourceNotAssociatedException("La direccion no esta asociada al cliente");
@@ -105,11 +123,15 @@ public class ClienteService {
 
         //Recorre las direcciones del cliente y elimina solo si se encuentra el mismo ID que "direccionId"
         cliente.getDirecciones().removeIf(d -> d.getId().equals(direccionId));
+        direccion.getClientes().removeIf(c -> c.getId().equals(clienteId));
 
-        //Tambien borramos la entidad de la BDD asi no queda huerfana
-        direccionService.deleteDireccion(direccionId);
+        ClienteResponseDTO response = mapper.toResponse(repository.save(cliente));
 
-        return mapper.toResponse(repository.save(cliente));
+        //Solo borramos la direccion si ningun otro cliente la usa, asi no queda huerfana
+        if (direccion.getClientes().isEmpty())
+            direccionService.deleteDireccion(direccionId);
+
+        return response;
     }
 
     ///----- Validations -----
