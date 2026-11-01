@@ -75,12 +75,14 @@ public class ClienteService {
         return mapper.toResponse(repository.save(entity));
     }
 
-    // Crea y Asocia una direccion a un Cliente
+    // Crea y Asocia una direccion a un Cliente.
+    // Si ya existe una igual en la BDD (de otro cliente), se reutiliza esa en vez de crear un duplicado
     @Transactional
     public ClienteResponseDTO associateDireccion(Long clienteId, DireccionCreateRequestDTO request){
 
         ClienteEntity cliente = getEntityById(clienteId);
-        DireccionEntity direccion = direccionMapper.toEntity(request);
+        DireccionEntity direccion = direccionService.findIgual(request)
+                .orElseGet(() -> direccionMapper.toEntity(request));
 
         if (hasDireccion(cliente, direccion)){
             throw new ResourceAlreadyAssociatedException("El cliente ya tiene esa direccion asociada");

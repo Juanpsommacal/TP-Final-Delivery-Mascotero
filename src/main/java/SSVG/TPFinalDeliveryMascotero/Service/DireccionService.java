@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
+import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyExistsException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
@@ -48,6 +49,13 @@ public class DireccionService {
         repository.save(entity);
     }
 
+    // Busca si ya hay una direccion cargada con los mismos datos (de cualquier cliente)
+    public Optional<DireccionEntity> findIgual(DireccionCreateRequestDTO request){
+        return repository.findIguales(request.getCalle(), request.getNumero(), request.getPiso(), request.getDepartamento())
+                .stream()
+                .findFirst();
+    }
+
 
     ///----- Updates -----
 
@@ -76,6 +84,8 @@ public class DireccionService {
             entity.setObservaciones(request.getObservaciones());
         }
 
+        validarNoDuplicada(entity);
+
         return mapper.toResponse(repository.save(entity));
 
     }
@@ -86,5 +96,15 @@ public class DireccionService {
     }
 
     ///----- Validations -----
+
+    // Al editar, la direccion no puede quedar igual a otra que ya existe (se ignora a si misma por ID)
+    private void validarNoDuplicada(DireccionEntity entity){
+        boolean hayOtraIgual = repository.findIguales(entity.getCalle(), entity.getNumero(), entity.getPiso(), entity.getDepartamento())
+                .stream()
+                .anyMatch(d -> !d.getId().equals(entity.getId()));
+
+        if (hayOtraIgual)
+            throw new ResourceAlreadyExistsException("Ya existe otra direccion con esos datos");
+    }
 
 }

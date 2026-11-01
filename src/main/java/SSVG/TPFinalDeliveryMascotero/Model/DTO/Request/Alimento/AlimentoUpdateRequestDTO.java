@@ -38,7 +38,7 @@ public class AlimentoUpdateRequestDTO {
     private String marca;
 
     @PositiveOrZero(message = "El peso no puede ser menor a 0")
-    @Digits(integer = 3, fraction = 0, message = "El peso no puede tener mas de 3 digitos")
+    @Digits(integer = 3, fraction = 1, message = "El peso no puede tener mas de 3 digitos enteros y 1 decimal")
     private Double peso;
 
     @Size(max = 15, message = "La unidad de medida no puede exceder los 15 caracteres")
