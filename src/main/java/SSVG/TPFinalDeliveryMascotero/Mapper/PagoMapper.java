@@ -18,6 +18,11 @@ public interface PagoMapper {
 
     @Mapping(target = "pedidoId", source = "pedido.id")
     @Mapping(target = "clienteId", source = "pedido.cliente.id")
+    @Mapping(target = "nombreCliente", expression = "java(getNombreCliente(entity))")
     // Creo q esto no va. hay q Probarlo @Mapping(target = "metodoPago", source = "metodoPago")
     public PagoResponseDTO toResponse(PagoEntity entity);
+
+    default String getNombreCliente(PagoEntity entity){
+        return entity.getPedido().getCliente().getNombre() + " " + entity.getPedido().getCliente().getApellido();
+    }
 }

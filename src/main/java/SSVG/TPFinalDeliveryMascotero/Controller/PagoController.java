@@ -26,6 +26,12 @@ public class PagoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<List<PagoResponseDTO>> getAll(){
+        return ResponseEntity.ok(service.getAll());
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<PagoResponseDTO> getById(@PathVariable Long id) {

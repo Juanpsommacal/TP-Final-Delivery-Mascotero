@@ -196,6 +196,11 @@ public class PedidoService {
         if (pedido.getEstadoPago() != EstadoPago.PENDIENTE){
             throw new InvalidResourceStateException("Solo se pueden cancelar pedidos con estado de pago pendiente");
         }
+
+        // Un pago adelantado deja el pedido en PENDIENTE, pero si se cancelara esa plata quedaria sin pedido
+        if (!pedido.getPagos().isEmpty()){
+            throw new InvalidResourceStateException("No se puede cancelar un pedido que ya tiene pagos registrados");
+        }
         //Recorremos el detalle de productos y devolvemos el stock
         pedido.getProductos()
                 .forEach(detalle -> {
@@ -230,6 +235,9 @@ public class PedidoService {
         // Se setea el Estado del pedido como ENTREGADO
         pedido.setEstadoPedido(EstadoPedido.ENTREGADO);
 
+        // Al entregarlo, si falta pagar algo pasa a DEUDA o DEUDA_PARCIAL
+        actualizarEstadoPago(pedido);
+
         return mapper.toResponse(repository.save(pedido));
     }
 
@@ -253,6 +261,33 @@ public class PedidoService {
     }
 
     /// ---- Funciones Utiles ----
+
+    // Unico lugar donde se decide el estado del pago. Se llama al entregar el pedido y al registrar un pago.
+    // - PAGADO: se pago el total, se haya entregado o no
+    // - PENDIENTE: todavia no se entrego (aunque haya pagos adelantados)
+    // - DEUDA: se entrego y no se pago nada
+    // - DEUDA_PARCIAL: se entrego y se pago solo una parte
+    public void actualizarEstadoPago(PedidoEntity pedido) {
+
+        // Un pedido cancelado queda con PEDIDO_CANCELADO, no se recalcula
+        if (pedido.getEstadoPedido() == EstadoPedido.CANCELADO) {
+            return;
+        }
+
+        BigDecimal totalPagado = pedido.getPagos().stream()
+                .map(pago -> pago.getMonto())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalPagado.compareTo(pedido.getMontoTotal()) >= 0) {
+            pedido.setEstadoPago(EstadoPago.PAGADO);
+        } else if (pedido.getEstadoPedido() != EstadoPedido.ENTREGADO) {
+            pedido.setEstadoPago(EstadoPago.PENDIENTE);
+        } else if (totalPagado.compareTo(BigDecimal.ZERO) == 0) {
+            pedido.setEstadoPago(EstadoPago.DEUDA);
+        } else {
+            pedido.setEstadoPago(EstadoPago.DEUDA_PARCIAL);
+        }
+    }
 
     // Sirve para validar que no se cargue el mismo producto 2 veces en la misma request
     private void validateNotRepeatProduct(PedidoCreateRequestDTO request) {

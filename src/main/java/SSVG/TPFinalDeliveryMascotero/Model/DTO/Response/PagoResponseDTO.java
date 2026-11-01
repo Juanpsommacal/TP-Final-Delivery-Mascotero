@@ -23,4 +23,6 @@ public class PagoResponseDTO {
 
     private Long clienteId;
 
+    private String nombreCliente;
+
 }

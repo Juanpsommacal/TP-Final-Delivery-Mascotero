@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.DuplicateResourceException;
+import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
 import SSVG.TPFinalDeliveryMascotero.Exception.InvalidResourceStateException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.CompraMapper;
@@ -40,6 +41,11 @@ public class CompraService {
         //Buscamos el proveedor
         ProveedorEntity proveedor = proveedorService.getEntityById(request.getProveedorId());
 
+        //No se le puede comprar a un proveedor dado de baja
+        if (!proveedor.getActivo()){
+            throw new InactiveResourceException("El proveedor " + proveedor.getNombre() + " esta dado de baja, no se le pueden hacer compras");
+        }
+
         //Creamos la newCompra vacia y vamos seteando los atributos
         CompraEntity newCompra = mapper.toEntity(request);
 
@@ -65,6 +71,8 @@ public class CompraService {
                 .map(requestDetalle -> {
 
                     ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
+                    //Queda registrado que este proveedor vende el producto (tabla producto_proveedor)
+                    associateProveedor(producto, proveedor);
 
                     //Creamos los detalleCompraEntity y seteamos los atributos
                     DetalleCompraEntity newDetalle = detalleCompraMapper.toEntity(requestDetalle);
@@ -127,7 +135,33 @@ public class CompraService {
         return mapper.toResponse(repository.save(compra));
     }
 
+    // Cancela una compra. Como el stock recien se suma al recibirla, no hay stock que devolver
+    @Transactional
+    public CompraResponseDTO cancelCompra(Long id){
+        CompraEntity compra = getEntityById(id);
+
+        if (compra.getEstadoCompra() == EstadoCompra.CANCELADA){
+            throw new InactiveResourceException("La compra con la ID: " + id + " ya fue cancelada");
+        }
+        if (compra.getEstadoCompra() != EstadoCompra.PENDIENTE){
+            throw new InvalidResourceStateException("Solo se pueden cancelar compras pendientes, esta ya fue recibida");
+        }
+
+        compra.setEstadoCompra(EstadoCompra.CANCELADA);
+        return mapper.toResponse(repository.save(compra));
+    }
+
     // Funciones Utiles
+
+    // Agrega el proveedor a la lista de proveedores del producto, si todavia no estaba
+    private void associateProveedor(ProductoEntity producto, ProveedorEntity proveedor){
+        boolean yaAsociado = producto.getProveedores().stream()
+                .anyMatch(p -> p.getId().equals(proveedor.getId()));
+        if (!yaAsociado){
+            producto.getProveedores().add(proveedor);
+            proveedor.getProductos().add(producto);
+        }
+    }
 
     // Sirve para validar que no se cargue el mismo producto 2 veces en la misma request tanto de Compra, Pedido y Oferta
     private void validateNotRepeatProduct(CompraCreateRequestDTO request) {

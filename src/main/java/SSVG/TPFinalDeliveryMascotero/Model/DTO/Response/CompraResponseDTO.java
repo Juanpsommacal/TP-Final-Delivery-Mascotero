@@ -17,6 +17,8 @@ public class CompraResponseDTO {
 
     private Long id;
 
+    private Long proveedorId;
+
     private LocalDate fecha;
 
     private String nombreProveedor;

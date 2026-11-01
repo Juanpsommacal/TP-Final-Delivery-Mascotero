@@ -16,6 +16,7 @@ public interface PedidoMapper {
 
     @Mapping(target = "nombreCliente",
             expression = "java(getNombreClienteCompleto(entity))")
+    @Mapping(target = "clienteId", source = "cliente.id")
     @Mapping(target = "detallePedido", source = "productos")
     @Mapping(target = "direccionCompleta", expression = "java(formatearDireccionCompleta(entity))")
     //Estos 2 Mappings los tuve que hacer manual porque no funcionan. No se por que

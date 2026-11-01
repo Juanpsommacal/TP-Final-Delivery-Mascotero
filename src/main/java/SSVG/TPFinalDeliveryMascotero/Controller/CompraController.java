@@ -44,4 +44,10 @@ public class CompraController {
     public ResponseEntity<CompraResponseDTO> receiveCompra(@PathVariable Long id){
         return ResponseEntity.ok(service.receiveCompra(id));
     }
+
+    @PatchMapping("/{id}/cancelar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<CompraResponseDTO> cancelCompra(@PathVariable Long id){
+        return ResponseEntity.ok(service.cancelCompra(id));
+    }
 }

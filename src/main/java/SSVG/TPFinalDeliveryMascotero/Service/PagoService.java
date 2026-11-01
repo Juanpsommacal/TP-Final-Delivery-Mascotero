@@ -66,13 +66,8 @@ public class PagoService {
         // Le agrego al Pedido el registro del Pago
         pedido.getPagos().add(savedPago);
 
-        // Defino y actualizo el Estado del Pago (DEUDA_PARCIAL o PAGADO)
-        BigDecimal actualTotalPagado = totalPagado.add(request.getMonto());
-        if (actualTotalPagado.compareTo(pedido.getMontoTotal()) >= 0){
-            pedido.setEstadoPago(EstadoPago.PAGADO);
-        } else {
-            pedido.setEstadoPago(EstadoPago.DEUDA_PARCIAL);
-        }
+        // Recalculo el Estado del Pago con la misma regla que se usa al entregar el pedido
+        pedidoService.actualizarEstadoPago(pedido);
 
         return mapper.toResponse(savedPago);
     }
@@ -86,6 +81,12 @@ public class PagoService {
 
     public PagoResponseDTO getDTOById(Long id){
         return mapper.toResponse(getEntityById(id));
+    }
+
+    public List<PagoResponseDTO> getAll(){
+        return repository.findAll().stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 
     public List<PagoResponseDTO> listPagosByClienteId(Long clienteId){

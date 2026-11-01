@@ -72,6 +72,10 @@ public class ProveedorService {
             proveedor.setTelefono(request.getTelefono());
         }
 
+        if (request.getActivo() != null) {
+            proveedor.setActivo(request.getActivo());
+        }
+
         return mapper.toResponse(repository.save(proveedor));
     }
 

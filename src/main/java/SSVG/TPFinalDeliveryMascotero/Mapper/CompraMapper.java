@@ -23,6 +23,7 @@ public interface CompraMapper {
 
     //Con mapStruct podemos acceder a los atributos de los objetos que estan en nuestra entidad
     //usando source en vez de usar un metodo default
+    @Mapping(target = "proveedorId", source = "proveedor.id")
     @Mapping(target = "nombreProveedor", source = "proveedor.nombre")
     @Mapping(target = "detalleResponseDTO", source = "productos")
     public CompraResponseDTO toResponse (CompraEntity entity);

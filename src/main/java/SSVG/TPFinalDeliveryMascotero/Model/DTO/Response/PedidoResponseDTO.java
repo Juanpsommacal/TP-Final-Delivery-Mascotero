@@ -13,6 +13,8 @@ public class PedidoResponseDTO {
 
     private Long id;
 
+    private Long clienteId;
+
     private String nombreCliente;
 
     private LocalDate fecha;
