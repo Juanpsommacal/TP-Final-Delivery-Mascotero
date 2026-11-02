@@ -29,6 +29,8 @@ public interface PedidoRepository extends JpaRepository<PedidoEntity, Long> {
 
     List<PedidoEntity> findByEstadoPago(EstadoPago estado);
 
+    boolean existsByClienteId(Long clienteId);
+
     @Query("""
         SELECT new SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Reportes.VentasPorMesResponseDTO(
             YEAR(p.fecha), 

@@ -1,9 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
-import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyAssociatedException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotAssociatedException;
-import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
+import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ClienteMapper;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
@@ -13,10 +10,12 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreate
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.ClienteRepository;
+import SSVG.TPFinalDeliveryMascotero.Repository.PedidoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,18 +24,19 @@ import java.util.Optional;
 @Service
 public class ClienteService {
 
-    private final ClienteRepository repository;
+    private final ClienteRepository clienteRepository;
+    private final PedidoRepository pedidoRepository;
     private final DireccionService direccionService;
     private final DireccionMapper direccionMapper;
     private final ClienteMapper mapper;
 
     public ClienteResponseDTO createCliente(ClienteCreateRequestDTO request){
         ClienteEntity newCliente = mapper.toEntity(request);
-        return mapper.toResponse(repository.save(newCliente));
+        return mapper.toResponse(clienteRepository.save(newCliente));
     }
 
     public ClienteEntity getEntityById(Long id){
-        Optional<ClienteEntity> entity = repository.findById(id);
+        Optional<ClienteEntity> entity = clienteRepository.findById(id);
         if (entity.isPresent())
             return entity.get();
         else throw new ResourceNotFoundException("El cliente con la ID: " + id + " no existe");
@@ -47,7 +47,7 @@ public class ClienteService {
     }
 
     public List<ClienteResponseDTO> getAll(){
-        return repository.findAll().stream()
+        return clienteRepository.findAll().stream()
                 .map(mapper::toResponse)
                 .toList();
     }
@@ -72,8 +72,31 @@ public class ClienteService {
                 throw new EmptyUpdateFieldException("El telefono no puede ser solo espacios en blanco");
             entity.setTelefono(request.getTelefono());
         }
-        return mapper.toResponse(repository.save(entity));
+        return mapper.toResponse(clienteRepository.save(entity));
     }
+
+    @Transactional
+    public void deleteCliente(Long id){
+        ClienteEntity cliente = getEntityById(id);
+
+        if (pedidoRepository.existsByClienteId(id)) {
+            throw new InvalidResourceStateException("El cliente tiene pedidos asociados y no puede eliminarse");
+        }
+
+        // Se recorre una copia porque se modifica la lista original mientras se itera
+        for (DireccionEntity direccion : new ArrayList<>(cliente.getDirecciones())) {
+            direccion.getClientes().remove(cliente);
+            cliente.getDirecciones().remove(direccion);
+
+            // Si ningun otro cliente usa la direccion, no se deja huerfana en la base
+            if (direccion.getClientes().isEmpty()) {
+                direccionService.deleteDireccion(direccion.getId());
+            }
+        }
+
+        clienteRepository.delete(cliente);
+    }
+
 
     // Crea y Asocia una direccion a un Cliente.
     // Si ya existe una igual en la BDD (de otro cliente), se reutiliza esa en vez de crear un duplicado
@@ -92,7 +115,7 @@ public class ClienteService {
         direccion.getClientes().add(cliente);
         direccionService.saveEntity(direccion);
 
-        return mapper.toResponse(repository.save(cliente));
+        return mapper.toResponse(clienteRepository.save(cliente));
     }
 
     // Asocia a un Cliente una direccion que ya existe en la BDD (ej: dos clientes que viven en el mismo lugar)
@@ -109,7 +132,7 @@ public class ClienteService {
         cliente.getDirecciones().add(direccion);
         direccion.getClientes().add(cliente);
 
-        return mapper.toResponse(repository.save(cliente));
+        return mapper.toResponse(clienteRepository.save(cliente));
     }
 
     // Desvincular la direccion de un cliente por ID
@@ -127,7 +150,7 @@ public class ClienteService {
         cliente.getDirecciones().removeIf(d -> d.getId().equals(direccionId));
         direccion.getClientes().removeIf(c -> c.getId().equals(clienteId));
 
-        ClienteResponseDTO response = mapper.toResponse(repository.save(cliente));
+        ClienteResponseDTO response = mapper.toResponse(clienteRepository.save(cliente));
 
         //Solo borramos la direccion si ningun otro cliente la usa, asi no queda huerfana
         if (direccion.getClientes().isEmpty())

@@ -67,6 +67,11 @@ public class ClienteController {
         return ResponseEntity.ok(service.dissociateDireccion(clienteId, direccionId));
     }
 
-
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteCliente(@PathVariable Long id) {
+        service.deleteCliente(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }
