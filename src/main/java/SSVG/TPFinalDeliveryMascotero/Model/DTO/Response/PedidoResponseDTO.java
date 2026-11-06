@@ -5,6 +5,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -28,6 +29,8 @@ public class PedidoResponseDTO {
     private String direccionCompleta;
 
     private String pisoDepto;
+
+    private LocalDateTime ultimoRecordatorio;
 
     private List<DetallePedidoResponseDTO> detallePedido;
 

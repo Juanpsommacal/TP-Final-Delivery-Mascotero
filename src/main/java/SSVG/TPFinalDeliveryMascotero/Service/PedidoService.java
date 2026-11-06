@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -238,6 +239,20 @@ public class PedidoService {
         // Al entregarlo, si falta pagar algo pasa a DEUDA o DEUDA_PARCIAL
         actualizarEstadoPago(pedido);
 
+        return mapper.toResponse(repository.save(pedido));
+    }
+
+    // Registra que se le mando al cliente un recordatorio del saldo pendiente
+    @Transactional
+    public PedidoResponseDTO registrarRecordatorio(Long id){
+        PedidoEntity pedido = getEntityById(id);
+
+        // Solo tiene sentido recordar un saldo que existe
+        if (pedido.getEstadoPago() != EstadoPago.DEUDA && pedido.getEstadoPago() != EstadoPago.DEUDA_PARCIAL){
+            throw new InvalidResourceStateException("Solo se puede registrar un recordatorio en pedidos con deuda");
+        }
+
+        pedido.setUltimoRecordatorio(LocalDateTime.now());
         return mapper.toResponse(repository.save(pedido));
     }
 

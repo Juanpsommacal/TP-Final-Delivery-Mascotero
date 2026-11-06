@@ -45,6 +45,12 @@ public class PedidoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/recordatorio")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<PedidoResponseDTO> registrarRecordatorio(@PathVariable Long id){
+        return ResponseEntity.ok(service.registrarRecordatorio(id));
+    }
+
     @PatchMapping("/{id}/entregar")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<PedidoResponseDTO> deliverPedido(@PathVariable Long id){
