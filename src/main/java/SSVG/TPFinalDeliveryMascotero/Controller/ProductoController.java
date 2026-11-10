@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PaginaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.ProductoService;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -22,5 +24,17 @@ public class ProductoController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<ProductoResponseDTO>> getAll(){
         return ResponseEntity.ok(service.getAll());
+    }
+
+    @GetMapping("/pagina")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<PaginaResponseDTO<ProductoResponseDTO>> getPagina(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String orden,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) Integer stockMaximo){
+        return ResponseEntity.ok(service.getPagina(page, size, orden, q, tipo, stockMaximo));
     }
 }

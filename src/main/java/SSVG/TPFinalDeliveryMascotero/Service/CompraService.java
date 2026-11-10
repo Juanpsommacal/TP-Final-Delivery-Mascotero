@@ -9,6 +9,8 @@ import SSVG.TPFinalDeliveryMascotero.Mapper.DetalleCompraMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.CompraEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Compra.CompraCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.CompraResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.ComprasPaginaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.UltimoPrecioCompraResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetalleCompraEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoCompra;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
@@ -16,6 +18,11 @@ import SSVG.TPFinalDeliveryMascotero.Model.ProveedorEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.CompraRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import SSVG.TPFinalDeliveryMascotero.Repository.DetalleCompraRepository;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.CompraConsultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.SumaConFiltros;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,6 +35,8 @@ import java.util.stream.Collectors;
 public class CompraService {
 
     private final CompraRepository repository;
+    private final DetalleCompraRepository detalleCompraRepository;
+    private final SumaConFiltros sumaConFiltros;
     private final CompraMapper mapper;
     private final ProveedorService proveedorService;
     private final ProductoService productoService;
@@ -108,6 +117,24 @@ public class CompraService {
         return repository.findAll().stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    public List<UltimoPrecioCompraResponseDTO> getUltimosPrecios(){
+        return detalleCompraRepository.getUltimosPrecios();
+    }
+
+    public List<Long> getProductoIdsDeProveedor(Long proveedorId){
+        return detalleCompraRepository.getProductoIdsDeProveedor(proveedorId);
+    }
+
+    public ComprasPaginaResponseDTO getPagina(int page, int size, String orden, String busqueda, EstadoCompra estado, boolean verCanceladas){
+        Specification<CompraEntity> filtro = CompraConsultas.filtrar(busqueda, estado, verCanceladas);
+        Specification<CompraEntity> ordenado = Consultas.ordenadoPor(orden, CompraConsultas.COLUMNAS, "id", false);
+
+        return new ComprasPaginaResponseDTO(
+                repository.findAll(filtro.and(ordenado), Consultas.pagina(page, size)).map(mapper::toResponse),
+                sumaConFiltros.sumar(CompraEntity.class, filtro.and(CompraConsultas.pendientes()),
+                        (root, query, cb) -> root.get("montoTotal")));
     }
 
     @Transactional

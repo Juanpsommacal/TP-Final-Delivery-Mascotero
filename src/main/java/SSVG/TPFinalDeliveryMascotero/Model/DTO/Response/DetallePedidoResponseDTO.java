@@ -16,6 +16,8 @@ public class DetallePedidoResponseDTO {
 
     private Integer cantidad;
 
+    private Integer stockDisponible;
+
     private BigDecimal precioUnitario;
 
     private Double descuentoAplicado;

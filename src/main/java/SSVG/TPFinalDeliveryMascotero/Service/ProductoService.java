@@ -2,8 +2,11 @@ package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.ProductoMapper;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PaginaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Producto.ProductoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.ProductoConsultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.ProductoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,13 @@ public class ProductoService {
         return repository.findByActivoTrue().stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    public PaginaResponseDTO<ProductoResponseDTO> getPagina(int page, int size, String orden, String busqueda, String tipo, Integer stockMaximo){
+        return new PaginaResponseDTO<>(repository.findAll(
+                ProductoConsultas.filtrar(busqueda, tipo, stockMaximo)
+                        .and(Consultas.ordenadoPor(orden, ProductoConsultas.COLUMNAS, "nombre", true)),
+                Consultas.pagina(page, size)).map(mapper::toResponse));
     }
 
     public ProductoEntity getEntityById(Long id){

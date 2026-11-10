@@ -56,6 +56,12 @@ public class PedidoEntity {
     // Ultima vez que se le mando al cliente un recordatorio del saldo por WhatsApp (null = nunca)
     private LocalDateTime ultimoRecordatorio;
 
+    // Dia pactado con el cliente (null mientras no este programado)
+    private LocalDate fechaEntrega;
+
+    // Posicion en el recorrido del reparto (null = todavia no se ordeno)
+    private Integer ordenReparto;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedidoEntity> productos = new ArrayList<>();
 

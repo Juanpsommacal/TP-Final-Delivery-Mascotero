@@ -9,8 +9,11 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionUpdate
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.DireccionConsultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.DireccionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -43,6 +46,15 @@ public class DireccionService {
         return repository.findAll().stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    /// Para el autocompletado: sin texto no devuelve nada.
+    public List<DireccionResponseDTO> buscar(String busqueda, int size){
+        if (busqueda == null || busqueda.isBlank()) return List.of();
+        return repository.findAll(DireccionConsultas.buscar(busqueda),
+                        Consultas.pagina(0, size).withSort(Sort.by("calle", "numero")))
+                .map(mapper::toResponse)
+                .getContent();
     }
 
     void saveEntity(DireccionEntity entity){

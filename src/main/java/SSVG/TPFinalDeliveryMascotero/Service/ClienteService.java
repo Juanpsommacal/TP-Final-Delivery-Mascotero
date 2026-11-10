@@ -8,17 +8,28 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteCreateRequ
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.ClienteFilaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PaginaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.ResumenPedidosCliente;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.ClienteRepository;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.ClienteConsultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.PedidoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -50,6 +61,25 @@ public class ClienteService {
         return clienteRepository.findAll().stream()
                 .map(mapper::toResponse)
                 .toList();
+    }
+
+    public PaginaResponseDTO<ClienteFilaResponseDTO> getPagina(int page, int size, String orden, String busqueda, boolean soloConDeuda){
+        Specification<ClienteEntity> filtro = ClienteConsultas.filtrar(busqueda, soloConDeuda)
+                .and(Consultas.ordenadoPor(orden, ClienteConsultas.COLUMNAS, "nombre", true));
+        Page<ClienteEntity> clientes = clienteRepository.findAll(filtro, Consultas.pagina(page, size));
+
+        // Se resumen los pedidos solo de los clientes de esta pagina
+        List<Long> ids = clientes.getContent().stream().map(ClienteEntity::getId).toList();
+        Map<Long, ResumenPedidosCliente> resumenes = ids.isEmpty() ? Map.of() : pedidoRepository.getResumenPorCliente(ids).stream()
+                .collect(Collectors.toMap(ResumenPedidosCliente::clienteId, Function.identity()));
+
+        return new PaginaResponseDTO<>(clientes.map(cliente -> {
+            ResumenPedidosCliente resumen = resumenes.get(cliente.getId());
+            return resumen == null
+                    ? new ClienteFilaResponseDTO(mapper.toResponse(cliente), 0, BigDecimal.ZERO, null, null)
+                    : new ClienteFilaResponseDTO(mapper.toResponse(cliente), resumen.pedidos(), resumen.deuda(),
+                                                 resumen.ultimoPedido(), resumen.ultimoPedidoId());
+        }));
     }
 
     ///----- Updates -----

@@ -27,4 +27,7 @@ public class ProductoResponseDTO {
 
     private String tipoProducto;
 
+    // Lo que distingue a productos del mismo nombre: "3 kg" o "De 10 a 20 kg"
+    private String presentacion;
+
 }

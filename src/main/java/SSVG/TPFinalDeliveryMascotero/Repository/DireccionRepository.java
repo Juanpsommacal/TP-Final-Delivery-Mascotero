@@ -2,13 +2,14 @@ package SSVG.TPFinalDeliveryMascotero.Repository;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface DireccionRepository extends JpaRepository<DireccionEntity, Long> {
+public interface DireccionRepository extends JpaRepository<DireccionEntity, Long>, JpaSpecificationExecutor<DireccionEntity> {
 
     // Misma comparacion que "hasDireccion" de ClienteService: calle sin espacios ni mayusculas, numero, piso y depto.
     // Las observaciones no cuentan, son un dato de la direccion y no la identifican

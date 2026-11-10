@@ -1,7 +1,9 @@
 package SSVG.TPFinalDeliveryMascotero.Controller;
 
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pago.PagoCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PagosPaginaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PagoResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.Enums.MetodoPago;
 import SSVG.TPFinalDeliveryMascotero.Service.PagoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -30,6 +33,19 @@ public class PagoController {
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     public ResponseEntity<List<PagoResponseDTO>> getAll(){
         return ResponseEntity.ok(service.getAll());
+    }
+
+    @GetMapping("/pagina")
+    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    public ResponseEntity<PagosPaginaResponseDTO> getPagina(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String orden,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) List<MetodoPago> metodos,
+            @RequestParam(required = false) LocalDate desde,
+            @RequestParam(required = false) LocalDate hasta){
+        return ResponseEntity.ok(service.getPagina(page, size, orden, q, metodos, desde, hasta));
     }
 
     @GetMapping("/{id}")

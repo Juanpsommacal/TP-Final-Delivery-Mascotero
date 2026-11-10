@@ -4,6 +4,8 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteCreateRequ
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.ClienteFilaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PaginaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.ClienteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,17 @@ public class ClienteController {
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<ClienteResponseDTO>> getAll(){
         return ResponseEntity.ok(service.getAll());
+    }
+
+    @GetMapping("/pagina")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<PaginaResponseDTO<ClienteFilaResponseDTO>> getPagina(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String orden,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "false") boolean conDeuda){
+        return ResponseEntity.ok(service.getPagina(page, size, orden, q, conDeuda));
     }
 
     @GetMapping("/{id}")
