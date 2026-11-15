@@ -9,9 +9,14 @@ import java.math.BigDecimal;
 @Setter
 public class DetallePedidoResponseDTO {
 
+    // Para poder repetir un pedido desde el front sin depender del nombre
+    private Long productoId;
+
     private String nombreProducto;
 
     private Integer cantidad;
+
+    private Integer stockDisponible;
 
     private BigDecimal precioUnitario;
 

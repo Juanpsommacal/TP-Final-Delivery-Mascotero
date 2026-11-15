@@ -29,6 +29,8 @@ public class AlimentoResponseDTO {
 
     private BigDecimal precio;
 
+    private BigDecimal precioOferta;
+
     private Integer stock;
 
     private EtapaVida etapaVida;

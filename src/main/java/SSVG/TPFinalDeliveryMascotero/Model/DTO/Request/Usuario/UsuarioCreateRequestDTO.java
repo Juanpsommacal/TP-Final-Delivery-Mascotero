@@ -14,7 +14,7 @@ public class UsuarioCreateRequestDTO {
 
     @NotBlank(message = "El nombre no puede estar vacio")
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", message = "El nombre solo puede contener letras")
-    @Size(max = 30, message = "El apellido no puede exceder los 30 caracteres")
+    @Size(max = 30, message = "El nombre no puede exceder los 30 caracteres")
     private String nombre;
 
     @NotBlank(message = "El apellido no puede estar vacio")

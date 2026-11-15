@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.EmptyUpdateFieldException;
+import SSVG.TPFinalDeliveryMascotero.Exception.ResourceAlreadyExistsException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
@@ -8,8 +9,11 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionUpdate
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.DireccionResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PedidoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.DireccionConsultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.DireccionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,8 +48,24 @@ public class DireccionService {
                 .toList();
     }
 
+    /// Para el autocompletado: sin texto no devuelve nada.
+    public List<DireccionResponseDTO> buscar(String busqueda, int size){
+        if (busqueda == null || busqueda.isBlank()) return List.of();
+        return repository.findAll(DireccionConsultas.buscar(busqueda),
+                        Consultas.pagina(0, size).withSort(Sort.by("calle", "numero")))
+                .map(mapper::toResponse)
+                .getContent();
+    }
+
     void saveEntity(DireccionEntity entity){
         repository.save(entity);
+    }
+
+    // Busca si ya hay una direccion cargada con los mismos datos (de cualquier cliente)
+    public Optional<DireccionEntity> findIgual(DireccionCreateRequestDTO request){
+        return repository.findIguales(request.getCalle(), request.getNumero(), request.getPiso(), request.getDepartamento())
+                .stream()
+                .findFirst();
     }
 
 
@@ -76,6 +96,8 @@ public class DireccionService {
             entity.setObservaciones(request.getObservaciones());
         }
 
+        validarNoDuplicada(entity);
+
         return mapper.toResponse(repository.save(entity));
 
     }
@@ -86,5 +108,15 @@ public class DireccionService {
     }
 
     ///----- Validations -----
+
+    // Al editar, la direccion no puede quedar igual a otra que ya existe (se ignora a si misma por ID)
+    private void validarNoDuplicada(DireccionEntity entity){
+        boolean hayOtraIgual = repository.findIguales(entity.getCalle(), entity.getNumero(), entity.getPiso(), entity.getDepartamento())
+                .stream()
+                .anyMatch(d -> !d.getId().equals(entity.getId()));
+
+        if (hayOtraIgual)
+            throw new ResourceAlreadyExistsException("Ya existe otra direccion con esos datos");
+    }
 
 }

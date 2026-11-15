@@ -15,6 +15,8 @@ public interface DetallePedidoMapper {
 //            target = "precioTotal" ,
 //            expression = "java(calcularPrecioTotal(entity))"
 //    )
+    @Mapping(target = "productoId", source = "producto.id")
+    @Mapping(target = "stockDisponible", source = "producto.stock")
     @Mapping(
             target = "nombreProducto",
             expression = "java(getNombreProductoCompleto(entity))"

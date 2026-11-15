@@ -1,6 +1,7 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.DuplicateResourceException;
+import SSVG.TPFinalDeliveryMascotero.Exception.InactiveResourceException;
 import SSVG.TPFinalDeliveryMascotero.Exception.InvalidResourceStateException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.CompraMapper;
@@ -8,6 +9,8 @@ import SSVG.TPFinalDeliveryMascotero.Mapper.DetalleCompraMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.CompraEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Compra.CompraCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.CompraResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.ComprasPaginaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.UltimoPrecioCompraResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DetalleCompraEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoCompra;
 import SSVG.TPFinalDeliveryMascotero.Model.Producto.ProductoEntity;
@@ -15,6 +18,11 @@ import SSVG.TPFinalDeliveryMascotero.Model.ProveedorEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.CompraRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import SSVG.TPFinalDeliveryMascotero.Repository.DetalleCompraRepository;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.CompraConsultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.SumaConFiltros;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,6 +35,8 @@ import java.util.stream.Collectors;
 public class CompraService {
 
     private final CompraRepository repository;
+    private final DetalleCompraRepository detalleCompraRepository;
+    private final SumaConFiltros sumaConFiltros;
     private final CompraMapper mapper;
     private final ProveedorService proveedorService;
     private final ProductoService productoService;
@@ -39,6 +49,11 @@ public class CompraService {
 
         //Buscamos el proveedor
         ProveedorEntity proveedor = proveedorService.getEntityById(request.getProveedorId());
+
+        //No se le puede comprar a un proveedor dado de baja
+        if (!proveedor.getActivo()){
+            throw new InactiveResourceException("El proveedor " + proveedor.getNombre() + " esta dado de baja, no se le pueden hacer compras");
+        }
 
         //Creamos la newCompra vacia y vamos seteando los atributos
         CompraEntity newCompra = mapper.toEntity(request);
@@ -65,6 +80,8 @@ public class CompraService {
                 .map(requestDetalle -> {
 
                     ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
+                    //Queda registrado que este proveedor vende el producto (tabla producto_proveedor)
+                    associateProveedor(producto, proveedor);
 
                     //Creamos los detalleCompraEntity y seteamos los atributos
                     DetalleCompraEntity newDetalle = detalleCompraMapper.toEntity(requestDetalle);
@@ -102,6 +119,24 @@ public class CompraService {
                 .toList();
     }
 
+    public List<UltimoPrecioCompraResponseDTO> getUltimosPrecios(){
+        return detalleCompraRepository.getUltimosPrecios();
+    }
+
+    public List<Long> getProductoIdsDeProveedor(Long proveedorId){
+        return detalleCompraRepository.getProductoIdsDeProveedor(proveedorId);
+    }
+
+    public ComprasPaginaResponseDTO getPagina(int page, int size, String orden, String busqueda, EstadoCompra estado, boolean verCanceladas){
+        Specification<CompraEntity> filtro = CompraConsultas.filtrar(busqueda, estado, verCanceladas);
+        Specification<CompraEntity> ordenado = Consultas.ordenadoPor(orden, CompraConsultas.COLUMNAS, "id", false);
+
+        return new ComprasPaginaResponseDTO(
+                repository.findAll(filtro.and(ordenado), Consultas.pagina(page, size)).map(mapper::toResponse),
+                sumaConFiltros.sumar(CompraEntity.class, filtro.and(CompraConsultas.pendientes()),
+                        (root, query, cb) -> root.get("montoTotal")));
+    }
+
     @Transactional
     public CompraResponseDTO receiveCompra(Long id){
         // Se valida que exista la compra
@@ -127,7 +162,33 @@ public class CompraService {
         return mapper.toResponse(repository.save(compra));
     }
 
+    // Cancela una compra. Como el stock recien se suma al recibirla, no hay stock que devolver
+    @Transactional
+    public CompraResponseDTO cancelCompra(Long id){
+        CompraEntity compra = getEntityById(id);
+
+        if (compra.getEstadoCompra() == EstadoCompra.CANCELADA){
+            throw new InactiveResourceException("La compra con la ID: " + id + " ya fue cancelada");
+        }
+        if (compra.getEstadoCompra() != EstadoCompra.PENDIENTE){
+            throw new InvalidResourceStateException("Solo se pueden cancelar compras pendientes, esta ya fue recibida");
+        }
+
+        compra.setEstadoCompra(EstadoCompra.CANCELADA);
+        return mapper.toResponse(repository.save(compra));
+    }
+
     // Funciones Utiles
+
+    // Agrega el proveedor a la lista de proveedores del producto, si todavia no estaba
+    private void associateProveedor(ProductoEntity producto, ProveedorEntity proveedor){
+        boolean yaAsociado = producto.getProveedores().stream()
+                .anyMatch(p -> p.getId().equals(proveedor.getId()));
+        if (!yaAsociado){
+            producto.getProveedores().add(proveedor);
+            proveedor.getProductos().add(producto);
+        }
+    }
 
     // Sirve para validar que no se cargue el mismo producto 2 veces en la misma request tanto de Compra, Pedido y Oferta
     private void validateNotRepeatProduct(CompraCreateRequestDTO request) {

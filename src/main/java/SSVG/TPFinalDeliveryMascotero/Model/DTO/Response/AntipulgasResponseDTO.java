@@ -24,6 +24,8 @@ public class AntipulgasResponseDTO {
 
     private BigDecimal precio;
 
+    private BigDecimal precioOferta;
+
     private Integer stock;
 
     private TipoAnimal tipoAnimal;

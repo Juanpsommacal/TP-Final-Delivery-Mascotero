@@ -33,6 +33,13 @@ public class DireccionController {
         return ResponseEntity.ok(service.getAll());
     }
 
+    @GetMapping("/buscar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<List<DireccionResponseDTO>> buscar(@RequestParam(required = false) String q,
+                                                             @RequestParam(defaultValue = "20") int size){
+        return ResponseEntity.ok(service.buscar(q, size));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<DireccionResponseDTO> getById(@PathVariable Long id){

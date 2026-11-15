@@ -23,7 +23,7 @@ public class DetalleCompraCreateRequestDTO {
 
     @NotNull(message = "La cantidad no puede estar vacia")
     @Positive(message = "La cantidad debe ser un valor positivo")
-    @Digits(integer = 2, fraction = 0, message = "La cantidad no puede tener mas de 2 digitos")
+    @Digits(integer = 4, fraction = 0, message = "La cantidad no puede tener mas de 4 digitos")
     private Integer cantidad;
 
     @NotNull(message = "El precio unitario no puede estar vacio")

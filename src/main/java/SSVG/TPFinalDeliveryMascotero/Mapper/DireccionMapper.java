@@ -7,6 +7,8 @@ import SSVG.TPFinalDeliveryMascotero.Model.DireccionEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface DireccionMapper {
 
@@ -20,7 +22,17 @@ public interface DireccionMapper {
             target = "pisoDepto",
             expression = "java(formatearPisoDepto(entity))"
     )
+    @Mapping(
+            target = "clientes",
+            expression = "java(nombresClientes(entity))"
+    )
     public DireccionResponseDTO toResponse(DireccionEntity entity);
+
+    default List<String> nombresClientes(DireccionEntity entity) {
+        return entity.getClientes().stream()
+                .map(cliente -> cliente.getNombre() + " " + cliente.getApellido())
+                .toList();
+    }
 
     default String formatearDireccion(DireccionEntity entity) {
         return entity.getCalle() + " " + entity.getNumero();

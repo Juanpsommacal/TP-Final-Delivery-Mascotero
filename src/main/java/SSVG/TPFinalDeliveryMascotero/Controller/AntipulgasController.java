@@ -40,7 +40,7 @@ public class AntipulgasController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<AntipulgasResponseDTO> updateAntipulgas(@Valid @RequestBody AntipulgasUpdateRequestDTO request,
                                                                   @PathVariable Long id){
         return ResponseEntity.ok(service.updateAntipulgas(request, id));

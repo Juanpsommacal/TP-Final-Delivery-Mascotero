@@ -5,6 +5,7 @@ import SSVG.TPFinalDeliveryMascotero.Exception.LimitExceededException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
 import SSVG.TPFinalDeliveryMascotero.Mapper.PagoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pago.PagoCreateRequestDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PagosPaginaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PagoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
@@ -14,10 +15,17 @@ import SSVG.TPFinalDeliveryMascotero.Model.PedidoEntity;
 import SSVG.TPFinalDeliveryMascotero.Repository.PagoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.ExpresionColumna;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.PagoConsultas;
+import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.SumaConFiltros;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +34,7 @@ import java.util.Optional;
 public class PagoService {
 
     private final PagoRepository repository;
+    private final SumaConFiltros sumaConFiltros;
     private final PagoMapper mapper;
     private final PedidoService pedidoService;
     private final ClienteService clienteService;
@@ -66,13 +75,8 @@ public class PagoService {
         // Le agrego al Pedido el registro del Pago
         pedido.getPagos().add(savedPago);
 
-        // Defino y actualizo el Estado del Pago (DEUDA_PARCIAL o PAGADO)
-        BigDecimal actualTotalPagado = totalPagado.add(request.getMonto());
-        if (actualTotalPagado.compareTo(pedido.getMontoTotal()) >= 0){
-            pedido.setEstadoPago(EstadoPago.PAGADO);
-        } else {
-            pedido.setEstadoPago(EstadoPago.DEUDA_PARCIAL);
-        }
+        // Recalculo el Estado del Pago con la misma regla que se usa al entregar el pedido
+        pedidoService.actualizarEstadoPago(pedido);
 
         return mapper.toResponse(savedPago);
     }
@@ -86,6 +90,30 @@ public class PagoService {
 
     public PagoResponseDTO getDTOById(Long id){
         return mapper.toResponse(getEntityById(id));
+    }
+
+    public List<PagoResponseDTO> getAll(){
+        return repository.findAll().stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    public PagosPaginaResponseDTO getPagina(int page, int size, String orden, String busqueda, List<MetodoPago> metodos,
+                                            LocalDate desde, LocalDate hasta){
+        Specification<PagoEntity> filtro = PagoConsultas.filtrar(busqueda, metodos, desde, hasta);
+        Specification<PagoEntity> ordenado = Consultas.ordenadoPor(orden, PagoConsultas.COLUMNAS, "fecha", false);
+        ExpresionColumna<PagoEntity> monto = (root, query, cb) -> root.get("monto");
+
+        List<PagosPaginaResponseDTO.TotalPorMetodo> totalPorMetodo = Arrays.stream(MetodoPago.values())
+                .map(metodo -> new PagosPaginaResponseDTO.TotalPorMetodo(metodo,
+                        sumaConFiltros.sumar(PagoEntity.class, filtro.and(PagoConsultas.conMetodo(metodo)), monto)))
+                .filter(fila -> fila.total().signum() > 0)
+                .toList();
+
+        return new PagosPaginaResponseDTO(
+                repository.findAll(filtro.and(ordenado), Consultas.pagina(page, size)).map(mapper::toResponse),
+                sumaConFiltros.sumar(PagoEntity.class, filtro, monto),
+                totalPorMetodo);
     }
 
     public List<PagoResponseDTO> listPagosByClienteId(Long clienteId){

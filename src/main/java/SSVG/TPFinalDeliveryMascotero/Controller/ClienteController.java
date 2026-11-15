@@ -4,6 +4,8 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteCreateRequ
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Cliente.ClienteUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Direccion.DireccionCreateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.ClienteResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.ClienteFilaResponseDTO;
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PaginaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Service.ClienteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +37,28 @@ public class ClienteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.associateDireccion(clienteId, request));
     }
 
+    @PostMapping("/{clienteId}/direcciones/{direccionId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<ClienteResponseDTO> associateDireccionExistente(@PathVariable Long clienteId,
+                                                                          @PathVariable Long direccionId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.associateDireccionExistente(clienteId, direccionId));
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<ClienteResponseDTO>> getAll(){
         return ResponseEntity.ok(service.getAll());
+    }
+
+    @GetMapping("/pagina")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    public ResponseEntity<PaginaResponseDTO<ClienteFilaResponseDTO>> getPagina(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String orden,
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "false") boolean conDeuda){
+        return ResponseEntity.ok(service.getPagina(page, size, orden, q, conDeuda));
     }
 
     @GetMapping("/{id}")
@@ -60,6 +80,11 @@ public class ClienteController {
         return ResponseEntity.ok(service.dissociateDireccion(clienteId, direccionId));
     }
 
-
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteCliente(@PathVariable Long id) {
+        service.deleteCliente(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }

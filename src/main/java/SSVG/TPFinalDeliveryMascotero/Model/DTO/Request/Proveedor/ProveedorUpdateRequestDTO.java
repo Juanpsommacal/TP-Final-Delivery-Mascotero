@@ -21,4 +21,7 @@ public class ProveedorUpdateRequestDTO {
     @Pattern(regexp = "^\\+?[0-9]{7,15}$", message = "El número de teléfono no es válido")
     private String telefono;
 
+    // Permite dar de baja o reactivar al proveedor desde el formulario de edicion
+    private Boolean activo;
+
 }

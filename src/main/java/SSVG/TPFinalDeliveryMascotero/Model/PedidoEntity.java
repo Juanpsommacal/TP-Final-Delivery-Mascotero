@@ -11,6 +11,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +52,15 @@ public class PedidoEntity {
     private Integer numero;
 
     private String pisoDepto;
+
+    // Ultima vez que se le mando al cliente un recordatorio del saldo por WhatsApp (null = nunca)
+    private LocalDateTime ultimoRecordatorio;
+
+    // Dia pactado con el cliente (null mientras no este programado)
+    private LocalDate fechaEntrega;
+
+    // Posicion en el recorrido del reparto (null = todavia no se ordeno)
+    private Integer ordenReparto;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetallePedidoEntity> productos = new ArrayList<>();
