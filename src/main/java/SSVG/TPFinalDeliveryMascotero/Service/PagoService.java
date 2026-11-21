@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
+import SSVG.TPFinalDeliveryMascotero.Event.PagoRegistradoEvent;
 import SSVG.TPFinalDeliveryMascotero.Exception.InvalidResourceStateException;
 import SSVG.TPFinalDeliveryMascotero.Exception.LimitExceededException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
@@ -18,6 +19,7 @@ import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.ExpresionColumna;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.PagoConsultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.SumaConFiltros;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +39,7 @@ public class PagoService {
     private final PagoMapper mapper;
     private final PedidoService pedidoService;
     private final ClienteService clienteService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PagoResponseDTO createPago(PagoCreateRequestDTO request){
@@ -74,8 +77,8 @@ public class PagoService {
         // Le agrego al Pedido el registro del Pago
         pedido.getPagos().add(savedPago);
 
-        // Recalculo el Estado del Pago con la misma regla que se usa al entregar el pedido
-        pedidoService.actualizarEstadoPago(pedido);
+        // Observer: avisa que se registro un pago. EstadoPagoListener recalcula el estado de pago del pedido
+        eventPublisher.publishEvent(new PagoRegistradoEvent(pedido));
 
         return mapper.toResponse(savedPago);
     }

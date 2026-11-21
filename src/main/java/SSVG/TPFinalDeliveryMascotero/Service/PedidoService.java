@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
+import SSVG.TPFinalDeliveryMascotero.Event.PedidoCanceladoEvent;
 import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.Builder.DetallePedidoBuilder;
@@ -30,6 +31,7 @@ import SSVG.TPFinalDeliveryMascotero.Service.ValidacionPedido.PedidoValidationCh
 import SSVG.TPFinalDeliveryMascotero.Service.ValidacionPedido.PedidoValidationContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +53,7 @@ public class PedidoService {
     private final PedidoMapper mapper;
     private final SumaConFiltros sumaConFiltros;
     private final PedidoValidationChain validationChain;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PedidoResponseDTO createPedido(PedidoCreateRequestDTO request){
@@ -265,15 +268,8 @@ public class PedidoService {
         // El estado valida que se pueda cancelar y deja el pedido CANCELADO con el pago anulado
         pedido.state().cancelar(pedido);
 
-        //Si faltaba mercaderia nunca se desconto stock, asi que no hay nada que devolver
-        if (reservabaStock) {
-            pedido.getProductos()
-                    .forEach(detalle -> {
-                        ProductoEntity producto = productoService.getEntityById(detalle.getProducto().getId());
-                        producto.setStock(producto.getStock() + detalle.getCantidad());
-                        productoService.saveEntity(producto);
-                    });
-        }
+        // Observer: avisa que se cancelo. StockListener devuelve el stock si estaba reservado
+        eventPublisher.publishEvent(new PedidoCanceladoEvent(pedido, reservabaStock));
 
         //Guardamos en el repo
         repository.save(pedido);
