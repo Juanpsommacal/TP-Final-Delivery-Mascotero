@@ -26,6 +26,8 @@ import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.PedidoConsultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.SumaConFiltros;
 import SSVG.TPFinalDeliveryMascotero.Repository.PedidoRepository;
+import SSVG.TPFinalDeliveryMascotero.Service.ValidacionPedido.PedidoValidationChain;
+import SSVG.TPFinalDeliveryMascotero.Service.ValidacionPedido.PedidoValidationContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -48,52 +50,27 @@ public class PedidoService {
     private final DireccionMapper direccionMapper;
     private final PedidoMapper mapper;
     private final SumaConFiltros sumaConFiltros;
+    private final PedidoValidationChain validationChain;
 
     @Transactional
     public PedidoResponseDTO createPedido(PedidoCreateRequestDTO request){
 
-        //Buscamos si el cliente existe
-        ClienteEntity cliente = clienteService.getEntityById(request.getClienteId());
-
-        //Buscamos si el cliente tiene esa direccion
-        DireccionEntity direccionRequest = direccionMapper.toEntity(request.getDireccion());
-        if(!clienteService.hasDireccion(cliente, direccionRequest))
-            throw new ResourceNotAssociatedException("El cliente no tiene esa direccion asociada");
-
-        // Validamos que no se reciban productos repetidos en la request
-        validateNotRepeatProduct(request);
-
-        //Ahora verificamos si el stock que tenemos es suficiente para el pedido
-        // La falta de stock ya no frena el pedido: queda esperando la mercaderia
-        Map<String, List<String>> errorsMap = new HashMap<>();
-        List<String> productosInactivos = new ArrayList<>();
-
-        request.getDetalles()
-                .forEach(detalle -> {
-
-                    ProductoEntity producto = productoService.getEntityById(detalle.getProductoId());
-
-                    //Verificamos que no haya ningun producto inactivo
-                    if(!producto.getActivo()){
-                        productosInactivos.add(producto.getMarca().concat(" ").concat(producto.getNombre()));
-                    }
-                });
-
-        //Si hay productos inactivos tiramos la excepcion
-        if(!productosInactivos.isEmpty()){
-            errorsMap.put("Productos inactivos: ", productosInactivos);
-            throw new InsufficientStockException(errorsMap);
-        }
+        // Chain of Responsibility: cliente, direccion, productos repetidos y productos activos.
+        // Si alguna regla falla se lanza su excepcion y no se sigue.
+        PedidoValidationContext contexto = new PedidoValidationContext(request);
+        validationChain.validar(contexto);
+        ClienteEntity cliente = contexto.getCliente();
+        DireccionEntity direccionRequest = contexto.getDireccion();
 
         //Si alcanza el stock de todo se reserva ahora; si falta algo, no se reserva nada hasta tener el pedido completo
         boolean hayStock = request.getDetalles().stream()
-                .allMatch(detalle -> productoService.getEntityById(detalle.getProductoId()).getStock() >= detalle.getCantidad());
+                .allMatch(detalle -> contexto.getProducto(detalle.getProductoId()).getStock() >= detalle.getCantidad());
 
         //Calculamos el precio total del pedido con las ofertas activas
         BigDecimal montoTotal = request.getDetalles()
                 .stream()
                 .map(detalle -> {
-                        ProductoEntity producto = productoService.getEntityById(detalle.getProductoId());
+                        ProductoEntity producto = contexto.getProducto(detalle.getProductoId());
 
                         BigDecimal precioConDescuento = calculateUnitPriceProducto(producto);
 
@@ -106,7 +83,7 @@ public class PedidoService {
         if (hayStock) {
             request.getDetalles()
                     .forEach(detalle -> {
-                        ProductoEntity producto = productoService.getEntityById(detalle.getProductoId());
+                        ProductoEntity producto = contexto.getProducto(detalle.getProductoId());
                         producto.setStock(producto.getStock() - detalle.getCantidad());
                         productoService.saveEntity(producto);
                     });
@@ -128,7 +105,7 @@ public class PedidoService {
                 //Transformamos a producto
                 .map(requestDetalle -> {
 
-                    ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
+                    ProductoEntity producto = contexto.getProducto(requestDetalle.getProductoId());
 
                     DetallePedidoBuilder detalle = new DetallePedidoBuilder()
                             .deProducto(producto)
@@ -412,19 +389,6 @@ public class PedidoService {
             pedido.setEstadoPago(EstadoPago.DEUDA);
         } else {
             pedido.setEstadoPago(EstadoPago.DEUDA_PARCIAL);
-        }
-    }
-
-    // Sirve para validar que no se cargue el mismo producto 2 veces en la misma request
-    private void validateNotRepeatProduct(PedidoCreateRequestDTO request) {
-
-        long cantProductosUnicos = request.getDetalles().stream()
-                .map(detalle -> detalle.getProductoId())
-                .distinct()
-                .count();
-
-        if (cantProductosUnicos != request.getDetalles().size()){
-            throw new DuplicateResourceException("No se puede repetir el mismo Producto en el detalle del pedido");
         }
     }
 
