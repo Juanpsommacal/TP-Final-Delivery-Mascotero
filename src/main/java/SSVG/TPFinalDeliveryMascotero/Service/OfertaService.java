@@ -40,7 +40,7 @@ public class OfertaService {
             List<ProductoEntity> productos = getValidProducts(request.getProductosIds());
 
             for (ProductoEntity producto : productos) {
-                if (producto.getOferta() != null) {
+                if (tieneOtraOfertaActiva(producto, newOferta)) {
                     throw new ProductAlreadyHasOfferException(
                             "El producto con ID " + producto.getId() + " ya tiene una oferta asociada."
                     );
@@ -116,7 +116,7 @@ public class OfertaService {
         // Verifica que los productos no pertenezcan a otra oferta
         for (ProductoEntity producto : productos) {
 
-            if (producto.getOferta() != null && !producto.getOferta().getId().equals(oferta.getId())) {
+            if (tieneOtraOfertaActiva(producto, oferta)) {
 
                 throw new ProductAlreadyHasOfferException(
                         "El producto con ID " + producto.getId() + " ya pertenece a otra oferta."
@@ -150,8 +150,8 @@ public class OfertaService {
 
         ProductoEntity producto = getValidProduct(productoId);
 
-        // Valido si la oferta del producto es "null"
-        if (producto.getOferta() != null) {
+        // Se rechaza si el producto esta en otra oferta vigente o programada (una vencida no lo bloquea)
+        if (tieneOtraOfertaActiva(producto, oferta)) {
             throw new ProductAlreadyHasOfferException("El producto ya tiene una oferta asignada.");
         }
 
@@ -172,6 +172,12 @@ public class OfertaService {
 
         if (oferta.getProductos() == null) {
             oferta.setProductos(new ArrayList<>());
+        }
+
+        // Si venia de una oferta vencida, sale de la lista de esa oferta
+        OfertaEntity anterior = producto.getOferta();
+        if (anterior != null && anterior != oferta && anterior.getProductos() != null) {
+            anterior.getProductos().remove(producto);
         }
 
         producto.setOferta(oferta);
@@ -215,6 +221,17 @@ public class OfertaService {
     }
 
     ///----- Validations
+
+    // Un producto esta ocupado si pertenece a OTRA oferta que todavia no vencio (vigente o programada).
+    // Si la otra oferta ya vencio, el producto se puede pasar a la nueva.
+    private boolean tieneOtraOfertaActiva(ProductoEntity producto, OfertaEntity oferta) {
+        OfertaEntity actual = producto.getOferta();
+        if (actual == null) {
+            return false;
+        }
+        boolean esLaMisma = actual == oferta || (actual.getId() != null && actual.getId().equals(oferta.getId()));
+        return !esLaMisma && !actual.estaVencida(LocalDate.now());
+    }
 
     // Valida las fechas de inicio y fin de la oferta
     private void validateDates(LocalDate inicio, LocalDate fin) {

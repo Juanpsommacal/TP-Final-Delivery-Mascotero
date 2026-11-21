@@ -40,4 +40,18 @@ public class OfertaEntity {
     @OneToMany(mappedBy = "oferta")
     private List<ProductoEntity> productos;
 
+    // Ya termino: el producto queda libre para otra oferta
+    public boolean estaVencida(LocalDate hoy) {
+        return fechaFin != null && hoy.isAfter(fechaFin);
+    }
+
+    // Todavia no empezo
+    public boolean estaProgramada(LocalDate hoy) {
+        return fechaInicio != null && hoy.isBefore(fechaInicio);
+    }
+
+    public boolean estaVigente(LocalDate hoy) {
+        return !estaVencida(hoy) && !estaProgramada(hoy);
+    }
+
 }
