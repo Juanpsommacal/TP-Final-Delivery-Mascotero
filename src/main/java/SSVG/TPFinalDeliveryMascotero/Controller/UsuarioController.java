@@ -30,8 +30,9 @@ public class UsuarioController {
         return ResponseEntity.ok().body(usuarioService.getById(id));
     }
 
+    // Hacer admin a un usuario: solo el superadmin
     @PatchMapping("elevate/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPERADMIN')")
     public ResponseEntity<UsuarioResponseDTO> elevatePrivilage(@PathVariable long id) {
         return ResponseEntity.ok().body(usuarioService.elevatePrivilage(id));
     }

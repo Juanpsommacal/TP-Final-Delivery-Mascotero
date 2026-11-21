@@ -33,7 +33,7 @@ public class UsuarioService {
         return usuarioMapper.toResponse(usuarioRepository.save(usuario));
     }
 
-    // USER -> ADMIN. Lo pueden hacer los admins y el superadmin
+    // USER -> ADMIN. Solo el superadmin (lo controla el @PreAuthorize del controller)
     public UsuarioResponseDTO elevatePrivilage(long idUsuario)
     {
         UsuarioEntity user = findById(idUsuario);
