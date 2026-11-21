@@ -214,9 +214,7 @@ public class PedidoService {
         List<Long> ids = request.getPedidoIds();
         for (int posicion = 0; posicion < ids.size(); posicion++) {
             PedidoEntity pedido = getEntityById(ids.get(posicion));
-            if (pedido.getEstadoPedido() != EstadoPedido.PROGRAMADO) {
-                throw new InvalidResourceStateException("El pedido #" + pedido.getId() + " no esta programado para entregar");
-            }
+            pedido.state().validarOrdenReparto(pedido);
             pedido.setOrdenReparto(posicion);
         }
     }
@@ -226,18 +224,8 @@ public class PedidoService {
     public PedidoResponseDTO confirmarMercaderia(Long id){
         PedidoEntity pedido = getEntityById(id);
 
-        if (pedido.getEstadoPedido() != EstadoPedido.FALTA_MERCADERIA) {
-            throw new InvalidResourceStateException("Este pedido no esta esperando mercaderia");
-        }
-
-        List<String> faltantes = pedido.getProductos().stream()
-                .filter(detalle -> detalle.getProducto().getStock() < detalle.getCantidad())
-                .map(detalle -> detalle.getProducto().getMarca() + " " + detalle.getProducto().getNombre()
-                        + " (hay " + detalle.getProducto().getStock() + ", se necesitan " + detalle.getCantidad() + ")")
-                .toList();
-        if (!faltantes.isEmpty()) {
-            throw new InvalidResourceStateException("Todavia no alcanza el stock de: " + String.join(", ", faltantes));
-        }
+        // El estado valida que el pedido este esperando mercaderia y que ya alcance el stock
+        pedido.state().confirmarMercaderia(pedido);
 
         pedido.getProductos().forEach(detalle -> {
             ProductoEntity producto = detalle.getProducto();
@@ -245,7 +233,6 @@ public class PedidoService {
             productoService.saveEntity(producto);
         });
 
-        pedido.setEstadoPedido(EstadoPedido.A_COORDINAR);
         return mapper.toResponse(repository.save(pedido));
     }
 
@@ -253,17 +240,7 @@ public class PedidoService {
     @Transactional
     public PedidoResponseDTO programarEntrega(Long id, ProgramarEntregaRequestDTO request){
         PedidoEntity pedido = getEntityById(id);
-
-        if (pedido.getEstadoPedido() != EstadoPedido.A_COORDINAR && pedido.getEstadoPedido() != EstadoPedido.PROGRAMADO) {
-            throw new InvalidResourceStateException("Solo se puede programar la entrega de un pedido con la mercaderia lista");
-        }
-
-        // En otro dia el recorrido es otro: vuelve a quedar sin ordenar
-        if (!request.getFechaEntrega().equals(pedido.getFechaEntrega())) {
-            pedido.setOrdenReparto(null);
-        }
-        pedido.setFechaEntrega(request.getFechaEntrega());
-        pedido.setEstadoPedido(EstadoPedido.PROGRAMADO);
+        pedido.state().programarEntrega(pedido, request.getFechaEntrega());
         return mapper.toResponse(repository.save(pedido));
     }
 
@@ -271,14 +248,7 @@ public class PedidoService {
     @Transactional
     public PedidoResponseDTO volverACoordinar(Long id){
         PedidoEntity pedido = getEntityById(id);
-
-        if (pedido.getEstadoPedido() != EstadoPedido.PROGRAMADO) {
-            throw new InvalidResourceStateException("Solo se puede volver a coordinar un pedido programado");
-        }
-
-        pedido.setFechaEntrega(null);
-        pedido.setOrdenReparto(null);
-        pedido.setEstadoPedido(EstadoPedido.A_COORDINAR);
+        pedido.state().volverACoordinar(pedido);
         return mapper.toResponse(repository.save(pedido));
     }
 
@@ -288,22 +258,15 @@ public class PedidoService {
     @Transactional
     public void deleteById(Long id){
         PedidoEntity pedido = getEntityById(id);
-        //Verificamos que el pedido no este cancelado
-        if(pedido.getEstadoPedido().equals(EstadoPedido.CANCELADO)) {
-            throw new InactiveResourceException("El pedido con la ID: " + id + " ya fue cancelado");
-        }
 
-        if (pedido.getEstadoPedido() == EstadoPedido.ENTREGADO){
-            throw new InvalidResourceStateException("No se puede cancelar un pedido que ya fue entregado");
-        }
+        // Se pregunta antes de cancelar: despues el estado ya es CANCELADO
+        boolean reservabaStock = pedido.state().tieneStockReservado();
 
-        // Si se cancelara un pedido con pagos, esa plata quedaria sin pedido
-        if (!pedido.getPagos().isEmpty()){
-            throw new InvalidResourceStateException("No se puede cancelar un pedido que ya tiene pagos registrados");
-        }
+        // El estado valida que se pueda cancelar y deja el pedido CANCELADO con el pago anulado
+        pedido.state().cancelar(pedido);
 
         //Si faltaba mercaderia nunca se desconto stock, asi que no hay nada que devolver
-        if (pedido.getEstadoPedido() != EstadoPedido.FALTA_MERCADERIA) {
+        if (reservabaStock) {
             pedido.getProductos()
                     .forEach(detalle -> {
                         ProductoEntity producto = productoService.getEntityById(detalle.getProducto().getId());
@@ -311,10 +274,6 @@ public class PedidoService {
                         productoService.saveEntity(producto);
                     });
         }
-
-        //Seteamos el pedido como CANCELADO y el estado del pago queda anulado porque el pedido se cancelo
-        pedido.setEstadoPedido(EstadoPedido.CANCELADO);
-        pedido.setEstadoPago(EstadoPago.PEDIDO_CANCELADO);
 
         //Guardamos en el repo
         repository.save(pedido);
@@ -325,23 +284,8 @@ public class PedidoService {
     public PedidoResponseDTO deliverPedido(Long id){
         PedidoEntity pedido = getEntityById(id);
 
-        // Validamos que el Estado del Pedido no este CANCELADO
-        if (pedido.getEstadoPedido() == EstadoPedido.CANCELADO){
-            throw new InvalidResourceStateException("No se puede entregar un pedido cancelado");
-        }
-
-        // Validamos que el Estado del Pedido ya no figure como ENTREGADO
-        if (pedido.getEstadoPedido() == EstadoPedido.ENTREGADO){
-            throw new InvalidResourceStateException("El pedido ya fue entregado");
-        }
-
-        // Solo se entrega lo que ya tiene un dia pactado
-        if (pedido.getEstadoPedido() != EstadoPedido.PROGRAMADO){
-            throw new InvalidResourceStateException("Solo se pueden entregar pedidos con fecha de entrega programada");
-        }
-
-        // Se setea el Estado del pedido como ENTREGADO
-        pedido.setEstadoPedido(EstadoPedido.ENTREGADO);
+        // Solo se entrega lo que tiene un dia pactado; el estado valida y pasa a ENTREGADO
+        pedido.state().entregar(pedido);
 
         // Al entregarlo, si falta pagar algo pasa a DEUDA o DEUDA_PARCIAL
         actualizarEstadoPago(pedido);

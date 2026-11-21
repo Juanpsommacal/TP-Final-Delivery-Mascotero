@@ -8,7 +8,6 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pago.PagoCreateRequestDTO
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PagosPaginaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PagoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
-import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.MetodoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.PagoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.PedidoEntity;
@@ -131,9 +130,8 @@ public class PagoService {
             throw new InvalidResourceStateException("El pago no se puede registrar porque el pedido ya se encuentra totalmente pagado");
         }
 
-        if (pedido.getEstadoPedido() == EstadoPedido.CANCELADO){
-            throw new InvalidResourceStateException("No se puede registrar el pago, el pedido esta cancelado");
-        }
+        // El estado del pedido decide si admite pagos (un pedido cancelado no)
+        pedido.state().validarRecibirPago(pedido);
     }
 
 }
