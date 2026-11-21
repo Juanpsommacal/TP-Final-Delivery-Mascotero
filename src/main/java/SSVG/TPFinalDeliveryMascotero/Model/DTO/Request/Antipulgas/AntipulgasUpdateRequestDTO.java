@@ -1,41 +1,21 @@
 package SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Antipulgas;
 
+import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Producto.ProductoUpdateRequestDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAnimal;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.TipoAntipulgas;
 import SSVG.TPFinalDeliveryMascotero.Validations.ValidEnum;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-
+// Los campos comunes (nombre, descripcion, precio, stock y marca) vienen de ProductoUpdateRequestDTO
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class AntipulgasUpdateRequestDTO {
-
-    @Size(max = 30, message = "El nombre no puede exceder los 30 caracteres")
-    private String nombre;
-
-    @Size(max = 100, message = "La descripcion no puede exceder los 100 caracteres")
-    private String descripcion;
-
-    @PositiveOrZero(message = "El precio no puede ser menor a 0")
-    @Digits(integer = 7, fraction = 2, message = "El precio no puede tener mas de 7 digitos")
-    private BigDecimal precio;
-
-    @PositiveOrZero(message = "El stock no puede ser menor a 0")
-    @Digits(integer = 3, fraction = 0, message = "El stock no puede tener mas de 3 digitos")
-    private Integer stock;
-
-    @Size(max = 20, message = "La marca no puede exceder los 20 caracteres")
-    private String marca;
+public class AntipulgasUpdateRequestDTO extends ProductoUpdateRequestDTO {
 
     @Size(max = 10, message = "El tipo de animal no puede exceder los 10 caracteres")
     @ValidEnum(enumClass = TipoAnimal.class, message = "El tipo de animal debe ser GATO o PERRO")
