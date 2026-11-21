@@ -2,6 +2,8 @@ package SSVG.TPFinalDeliveryMascotero.Model;
 
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
+import SSVG.TPFinalDeliveryMascotero.Model.Estado.EstadoPedidoState;
+import SSVG.TPFinalDeliveryMascotero.Model.Estado.EstadoPedidoStates;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -67,5 +69,10 @@ public class PedidoEntity {
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL)
     private List<PagoEntity> pagos = new ArrayList<>();
+
+    // State: el pedido (contexto) delega en la clase de su estado actual lo que puede hacer
+    public EstadoPedidoState state() {
+        return EstadoPedidoStates.de(estadoPedido);
+    }
 
 }

@@ -1,5 +1,6 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
+import SSVG.TPFinalDeliveryMascotero.Event.PagoRegistradoEvent;
 import SSVG.TPFinalDeliveryMascotero.Exception.InvalidResourceStateException;
 import SSVG.TPFinalDeliveryMascotero.Exception.LimitExceededException;
 import SSVG.TPFinalDeliveryMascotero.Exception.ResourceNotFoundException;
@@ -8,7 +9,6 @@ import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pago.PagoCreateRequestDTO
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.Paginacion.PagosPaginaResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Response.PagoResponseDTO;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPago;
-import SSVG.TPFinalDeliveryMascotero.Model.Enums.EstadoPedido;
 import SSVG.TPFinalDeliveryMascotero.Model.Enums.MetodoPago;
 import SSVG.TPFinalDeliveryMascotero.Model.PagoEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.PedidoEntity;
@@ -19,6 +19,7 @@ import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.ExpresionColumna;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.PagoConsultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.SumaConFiltros;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ public class PagoService {
     private final PagoMapper mapper;
     private final PedidoService pedidoService;
     private final ClienteService clienteService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PagoResponseDTO createPago(PagoCreateRequestDTO request){
@@ -75,8 +77,8 @@ public class PagoService {
         // Le agrego al Pedido el registro del Pago
         pedido.getPagos().add(savedPago);
 
-        // Recalculo el Estado del Pago con la misma regla que se usa al entregar el pedido
-        pedidoService.actualizarEstadoPago(pedido);
+        // Observer: avisa que se registro un pago. EstadoPagoListener recalcula el estado de pago del pedido
+        eventPublisher.publishEvent(new PagoRegistradoEvent(pedido));
 
         return mapper.toResponse(savedPago);
     }
@@ -131,9 +133,8 @@ public class PagoService {
             throw new InvalidResourceStateException("El pago no se puede registrar porque el pedido ya se encuentra totalmente pagado");
         }
 
-        if (pedido.getEstadoPedido() == EstadoPedido.CANCELADO){
-            throw new InvalidResourceStateException("No se puede registrar el pago, el pedido esta cancelado");
-        }
+        // El estado del pedido decide si admite pagos (un pedido cancelado no)
+        pedido.state().validarRecibirPago(pedido);
     }
 
 }

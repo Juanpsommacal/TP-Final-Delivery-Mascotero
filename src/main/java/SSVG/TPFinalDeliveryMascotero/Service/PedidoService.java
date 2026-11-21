@@ -1,8 +1,10 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
-import SSVG.TPFinalDeliveryMascotero.Exception.*;
+import SSVG.TPFinalDeliveryMascotero.Event.PedidoCanceladoEvent;
 import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
+import SSVG.TPFinalDeliveryMascotero.Model.Builder.DetallePedidoBuilder;
+import SSVG.TPFinalDeliveryMascotero.Model.Builder.PedidoBuilder;
 import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.OrdenRepartoRequestDTO;
@@ -25,8 +27,11 @@ import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.Consultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.PedidoConsultas;
 import SSVG.TPFinalDeliveryMascotero.Repository.Consultas.SumaConFiltros;
 import SSVG.TPFinalDeliveryMascotero.Repository.PedidoRepository;
+import SSVG.TPFinalDeliveryMascotero.Service.ValidacionPedido.PedidoValidationChain;
+import SSVG.TPFinalDeliveryMascotero.Service.ValidacionPedido.PedidoValidationContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -47,63 +52,28 @@ public class PedidoService {
     private final DireccionMapper direccionMapper;
     private final PedidoMapper mapper;
     private final SumaConFiltros sumaConFiltros;
+    private final PedidoValidationChain validationChain;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PedidoResponseDTO createPedido(PedidoCreateRequestDTO request){
 
-        //Buscamos si el cliente existe
-        ClienteEntity cliente = clienteService.getEntityById(request.getClienteId());
-
-        //Buscamos si el cliente tiene esa direccion
-        DireccionEntity direccionRequest = direccionMapper.toEntity(request.getDireccion());
-        if(!clienteService.hasDireccion(cliente, direccionRequest))
-            throw new ResourceNotAssociatedException("El cliente no tiene esa direccion asociada");
-
-        // Validamos que no se reciban productos repetidos en la request
-        validateNotRepeatProduct(request);
-
-        //Ahora verificamos si el stock que tenemos es suficiente para el pedido
-        // La falta de stock ya no frena el pedido: queda esperando la mercaderia
-        Map<String, List<String>> errorsMap = new HashMap<>();
-        List<String> productosInactivos = new ArrayList<>();
-
-        request.getDetalles()
-                .forEach(detalle -> {
-
-                    ProductoEntity producto = productoService.getEntityById(detalle.getProductoId());
-
-                    //Verificamos que no haya ningun producto inactivo
-                    if(!producto.getActivo()){
-                        productosInactivos.add(producto.getMarca().concat(" ").concat(producto.getNombre()));
-                    }
-                });
-
-        //Si hay productos inactivos tiramos la excepcion
-        if(!productosInactivos.isEmpty()){
-            errorsMap.put("Productos inactivos: ", productosInactivos);
-            throw new InsufficientStockException(errorsMap);
-        }
+        // Chain of Responsibility: cliente, direccion, productos repetidos y productos activos.
+        // Si alguna regla falla se lanza su excepcion y no se sigue.
+        PedidoValidationContext contexto = new PedidoValidationContext(request);
+        validationChain.validar(contexto);
+        ClienteEntity cliente = contexto.getCliente();
+        DireccionEntity direccionRequest = contexto.getDireccion();
 
         //Si alcanza el stock de todo se reserva ahora; si falta algo, no se reserva nada hasta tener el pedido completo
         boolean hayStock = request.getDetalles().stream()
-                .allMatch(detalle -> productoService.getEntityById(detalle.getProductoId()).getStock() >= detalle.getCantidad());
-
-        //Creamos el pedido vacio y vamos seteando los atributos
-        PedidoEntity newPedido = new PedidoEntity();
-
-        newPedido.setCliente(cliente);
-        newPedido.setFecha(LocalDate.now());
-        newPedido.setEstadoPedido(hayStock ? EstadoPedido.A_COORDINAR : EstadoPedido.FALTA_MERCADERIA);
-        newPedido.setEstadoPago(EstadoPago.PENDIENTE);
-        newPedido.setCalle(direccionRequest.getCalle());
-        newPedido.setNumero(direccionRequest.getNumero());
-        newPedido.setPisoDepto(formatearPisoDepto(direccionRequest));
+                .allMatch(detalle -> contexto.getProducto(detalle.getProductoId()).getStock() >= detalle.getCantidad());
 
         //Calculamos el precio total del pedido con las ofertas activas
         BigDecimal montoTotal = request.getDetalles()
                 .stream()
                 .map(detalle -> {
-                        ProductoEntity producto = productoService.getEntityById(detalle.getProductoId());
+                        ProductoEntity producto = contexto.getProducto(detalle.getProductoId());
 
                         BigDecimal precioConDescuento = calculateUnitPriceProducto(producto);
 
@@ -116,17 +86,21 @@ public class PedidoService {
         if (hayStock) {
             request.getDetalles()
                     .forEach(detalle -> {
-                        ProductoEntity producto = productoService.getEntityById(detalle.getProductoId());
+                        ProductoEntity producto = contexto.getProducto(detalle.getProductoId());
                         producto.setStock(producto.getStock() - detalle.getCantidad());
                         productoService.saveEntity(producto);
                     });
         }
 
-        //Seteamos el precio
-        newPedido.setMontoTotal(montoTotal);
-
-        //Guardamos el pedido asi nos da la ID
-        PedidoEntity savedPedido = repository.save(newPedido);
+        //Armamos el pedido con el Builder y lo guardamos asi nos da la ID
+        PedidoEntity savedPedido = repository.save(
+                new PedidoBuilder()
+                        .paraCliente(cliente)
+                        .enDireccion(direccionRequest.getCalle(), direccionRequest.getNumero(),
+                                direccionMapper.formatearPisoDepto(direccionRequest))
+                        .conEstado(hayStock ? EstadoPedido.A_COORDINAR : EstadoPedido.FALTA_MERCADERIA)
+                        .conMontoTotal(montoTotal)
+                        .build());
 
         //Ahora creamos la lista de detallePedidoEntity
         List<DetallePedidoEntity> detalles = request.getDetalles()
@@ -134,30 +108,21 @@ public class PedidoService {
                 //Transformamos a producto
                 .map(requestDetalle -> {
 
-                    ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
+                    ProductoEntity producto = contexto.getProducto(requestDetalle.getProductoId());
 
-                    // Se guarda el precio original sin descuento
-                    BigDecimal precioOriginal = producto.getPrecio();
-                    // Se guarda el precio con el descuento aplicado
-                    BigDecimal precioConDescuento = calculateUnitPriceProducto(producto);
+                    DetallePedidoBuilder detalle = new DetallePedidoBuilder()
+                            .deProducto(producto)
+                            .cantidad(requestDetalle.getCantidad())
+                            .precioOriginal(producto.getPrecio())
+                            .precioConDescuento(calculateUnitPriceProducto(producto))
+                            .delPedido(savedPedido);
 
-                    //Creamos los detallePedidoEntity y seteamos los atributos
-                    DetallePedidoEntity newDetalle = new DetallePedidoEntity();
-                    newDetalle.setCantidad(requestDetalle.getCantidad());
-                    newDetalle.setPrecioUnitario(precioOriginal);
-                    newDetalle.setPrecioDescuento(precioConDescuento);
-
+                    // Sin oferta vigente el Builder deja el descuento en 0
                     if (currentOferta(producto)){
-                        newDetalle.setDescuentoAplicado(producto.getOferta().getPorcentaje());
-                    }else {
-                        // Si no tiene una oferta asignada el producto el descuento se le setea a "0.0"
-                        newDetalle.setDescuentoAplicado(0.0);
+                        detalle.descuentoAplicado(producto.getOferta().getPorcentaje());
                     }
 
-                    newDetalle.setPedido(savedPedido);
-                    newDetalle.setProducto(producto);
-
-                    return newDetalle;
+                    return detalle.build();
                 })
                 .collect(Collectors.toCollection(ArrayList::new));
 
@@ -252,9 +217,7 @@ public class PedidoService {
         List<Long> ids = request.getPedidoIds();
         for (int posicion = 0; posicion < ids.size(); posicion++) {
             PedidoEntity pedido = getEntityById(ids.get(posicion));
-            if (pedido.getEstadoPedido() != EstadoPedido.PROGRAMADO) {
-                throw new InvalidResourceStateException("El pedido #" + pedido.getId() + " no esta programado para entregar");
-            }
+            pedido.state().validarOrdenReparto(pedido);
             pedido.setOrdenReparto(posicion);
         }
     }
@@ -264,18 +227,8 @@ public class PedidoService {
     public PedidoResponseDTO confirmarMercaderia(Long id){
         PedidoEntity pedido = getEntityById(id);
 
-        if (pedido.getEstadoPedido() != EstadoPedido.FALTA_MERCADERIA) {
-            throw new InvalidResourceStateException("Este pedido no esta esperando mercaderia");
-        }
-
-        List<String> faltantes = pedido.getProductos().stream()
-                .filter(detalle -> detalle.getProducto().getStock() < detalle.getCantidad())
-                .map(detalle -> detalle.getProducto().getMarca() + " " + detalle.getProducto().getNombre()
-                        + " (hay " + detalle.getProducto().getStock() + ", se necesitan " + detalle.getCantidad() + ")")
-                .toList();
-        if (!faltantes.isEmpty()) {
-            throw new InvalidResourceStateException("Todavia no alcanza el stock de: " + String.join(", ", faltantes));
-        }
+        // El estado valida que el pedido este esperando mercaderia y que ya alcance el stock
+        pedido.state().confirmarMercaderia(pedido);
 
         pedido.getProductos().forEach(detalle -> {
             ProductoEntity producto = detalle.getProducto();
@@ -283,7 +236,6 @@ public class PedidoService {
             productoService.saveEntity(producto);
         });
 
-        pedido.setEstadoPedido(EstadoPedido.A_COORDINAR);
         return mapper.toResponse(repository.save(pedido));
     }
 
@@ -291,17 +243,7 @@ public class PedidoService {
     @Transactional
     public PedidoResponseDTO programarEntrega(Long id, ProgramarEntregaRequestDTO request){
         PedidoEntity pedido = getEntityById(id);
-
-        if (pedido.getEstadoPedido() != EstadoPedido.A_COORDINAR && pedido.getEstadoPedido() != EstadoPedido.PROGRAMADO) {
-            throw new InvalidResourceStateException("Solo se puede programar la entrega de un pedido con la mercaderia lista");
-        }
-
-        // En otro dia el recorrido es otro: vuelve a quedar sin ordenar
-        if (!request.getFechaEntrega().equals(pedido.getFechaEntrega())) {
-            pedido.setOrdenReparto(null);
-        }
-        pedido.setFechaEntrega(request.getFechaEntrega());
-        pedido.setEstadoPedido(EstadoPedido.PROGRAMADO);
+        pedido.state().programarEntrega(pedido, request.getFechaEntrega());
         return mapper.toResponse(repository.save(pedido));
     }
 
@@ -309,14 +251,7 @@ public class PedidoService {
     @Transactional
     public PedidoResponseDTO volverACoordinar(Long id){
         PedidoEntity pedido = getEntityById(id);
-
-        if (pedido.getEstadoPedido() != EstadoPedido.PROGRAMADO) {
-            throw new InvalidResourceStateException("Solo se puede volver a coordinar un pedido programado");
-        }
-
-        pedido.setFechaEntrega(null);
-        pedido.setOrdenReparto(null);
-        pedido.setEstadoPedido(EstadoPedido.A_COORDINAR);
+        pedido.state().volverACoordinar(pedido);
         return mapper.toResponse(repository.save(pedido));
     }
 
@@ -326,33 +261,15 @@ public class PedidoService {
     @Transactional
     public void deleteById(Long id){
         PedidoEntity pedido = getEntityById(id);
-        //Verificamos que el pedido no este cancelado
-        if(pedido.getEstadoPedido().equals(EstadoPedido.CANCELADO)) {
-            throw new InactiveResourceException("El pedido con la ID: " + id + " ya fue cancelado");
-        }
 
-        if (pedido.getEstadoPedido() == EstadoPedido.ENTREGADO){
-            throw new InvalidResourceStateException("No se puede cancelar un pedido que ya fue entregado");
-        }
+        // Se pregunta antes de cancelar: despues el estado ya es CANCELADO
+        boolean reservabaStock = pedido.state().tieneStockReservado();
 
-        // Si se cancelara un pedido con pagos, esa plata quedaria sin pedido
-        if (!pedido.getPagos().isEmpty()){
-            throw new InvalidResourceStateException("No se puede cancelar un pedido que ya tiene pagos registrados");
-        }
+        // El estado valida que se pueda cancelar y deja el pedido CANCELADO con el pago anulado
+        pedido.state().cancelar(pedido);
 
-        //Si faltaba mercaderia nunca se desconto stock, asi que no hay nada que devolver
-        if (pedido.getEstadoPedido() != EstadoPedido.FALTA_MERCADERIA) {
-            pedido.getProductos()
-                    .forEach(detalle -> {
-                        ProductoEntity producto = productoService.getEntityById(detalle.getProducto().getId());
-                        producto.setStock(producto.getStock() + detalle.getCantidad());
-                        productoService.saveEntity(producto);
-                    });
-        }
-
-        //Seteamos el pedido como CANCELADO y el estado del pago queda anulado porque el pedido se cancelo
-        pedido.setEstadoPedido(EstadoPedido.CANCELADO);
-        pedido.setEstadoPago(EstadoPago.PEDIDO_CANCELADO);
+        // Observer: avisa que se cancelo. StockListener devuelve el stock si estaba reservado
+        eventPublisher.publishEvent(new PedidoCanceladoEvent(pedido, reservabaStock));
 
         //Guardamos en el repo
         repository.save(pedido);
@@ -363,23 +280,8 @@ public class PedidoService {
     public PedidoResponseDTO deliverPedido(Long id){
         PedidoEntity pedido = getEntityById(id);
 
-        // Validamos que el Estado del Pedido no este CANCELADO
-        if (pedido.getEstadoPedido() == EstadoPedido.CANCELADO){
-            throw new InvalidResourceStateException("No se puede entregar un pedido cancelado");
-        }
-
-        // Validamos que el Estado del Pedido ya no figure como ENTREGADO
-        if (pedido.getEstadoPedido() == EstadoPedido.ENTREGADO){
-            throw new InvalidResourceStateException("El pedido ya fue entregado");
-        }
-
-        // Solo se entrega lo que ya tiene un dia pactado
-        if (pedido.getEstadoPedido() != EstadoPedido.PROGRAMADO){
-            throw new InvalidResourceStateException("Solo se pueden entregar pedidos con fecha de entrega programada");
-        }
-
-        // Se setea el Estado del pedido como ENTREGADO
-        pedido.setEstadoPedido(EstadoPedido.ENTREGADO);
+        // Solo se entrega lo que tiene un dia pactado; el estado valida y pasa a ENTREGADO
+        pedido.state().entregar(pedido);
 
         // Al entregarlo, si falta pagar algo pasa a DEUDA o DEUDA_PARCIAL
         actualizarEstadoPago(pedido);
@@ -399,25 +301,6 @@ public class PedidoService {
 
         pedido.setUltimoRecordatorio(LocalDateTime.now());
         return mapper.toResponse(repository.save(pedido));
-    }
-
-    /// ----- Formateo -----
-
-    private String formatearPisoDepto(DireccionEntity direccion) {
-        if (direccion.getPiso() == null && direccion.getDepartamento() == null) {
-            return "Sin especificar";
-        }
-
-        if (direccion.getPiso() == null) {
-            return "Depto: " + direccion.getDepartamento();
-        }
-
-        if (direccion.getDepartamento() == null || direccion.getDepartamento().isBlank()) {
-            return "Piso: " + direccion.getPiso();
-        }
-
-        return "Piso: " + direccion.getPiso()
-                + " | Depto: " + direccion.getDepartamento();
     }
 
     /// ---- Funciones Utiles ----
@@ -446,19 +329,6 @@ public class PedidoService {
             pedido.setEstadoPago(EstadoPago.DEUDA);
         } else {
             pedido.setEstadoPago(EstadoPago.DEUDA_PARCIAL);
-        }
-    }
-
-    // Sirve para validar que no se cargue el mismo producto 2 veces en la misma request
-    private void validateNotRepeatProduct(PedidoCreateRequestDTO request) {
-
-        long cantProductosUnicos = request.getDetalles().stream()
-                .map(detalle -> detalle.getProductoId())
-                .distinct()
-                .count();
-
-        if (cantProductosUnicos != request.getDetalles().size()){
-            throw new DuplicateResourceException("No se puede repetir el mismo Producto en el detalle del pedido");
         }
     }
 
