@@ -1,8 +1,9 @@
 package SSVG.TPFinalDeliveryMascotero.Service;
 
 import SSVG.TPFinalDeliveryMascotero.Exception.*;
-import SSVG.TPFinalDeliveryMascotero.Exception.*;
 import SSVG.TPFinalDeliveryMascotero.Mapper.DireccionMapper;
+import SSVG.TPFinalDeliveryMascotero.Model.Builder.DetallePedidoBuilder;
+import SSVG.TPFinalDeliveryMascotero.Model.Builder.PedidoBuilder;
 import SSVG.TPFinalDeliveryMascotero.Mapper.PedidoMapper;
 import SSVG.TPFinalDeliveryMascotero.Model.ClienteEntity;
 import SSVG.TPFinalDeliveryMascotero.Model.DTO.Request.Pedido.OrdenRepartoRequestDTO;
@@ -88,17 +89,6 @@ public class PedidoService {
         boolean hayStock = request.getDetalles().stream()
                 .allMatch(detalle -> productoService.getEntityById(detalle.getProductoId()).getStock() >= detalle.getCantidad());
 
-        //Creamos el pedido vacio y vamos seteando los atributos
-        PedidoEntity newPedido = new PedidoEntity();
-
-        newPedido.setCliente(cliente);
-        newPedido.setFecha(LocalDate.now());
-        newPedido.setEstadoPedido(hayStock ? EstadoPedido.A_COORDINAR : EstadoPedido.FALTA_MERCADERIA);
-        newPedido.setEstadoPago(EstadoPago.PENDIENTE);
-        newPedido.setCalle(direccionRequest.getCalle());
-        newPedido.setNumero(direccionRequest.getNumero());
-        newPedido.setPisoDepto(formatearPisoDepto(direccionRequest));
-
         //Calculamos el precio total del pedido con las ofertas activas
         BigDecimal montoTotal = request.getDetalles()
                 .stream()
@@ -122,11 +112,15 @@ public class PedidoService {
                     });
         }
 
-        //Seteamos el precio
-        newPedido.setMontoTotal(montoTotal);
-
-        //Guardamos el pedido asi nos da la ID
-        PedidoEntity savedPedido = repository.save(newPedido);
+        //Armamos el pedido con el Builder y lo guardamos asi nos da la ID
+        PedidoEntity savedPedido = repository.save(
+                new PedidoBuilder()
+                        .paraCliente(cliente)
+                        .enDireccion(direccionRequest.getCalle(), direccionRequest.getNumero(),
+                                direccionMapper.formatearPisoDepto(direccionRequest))
+                        .conEstado(hayStock ? EstadoPedido.A_COORDINAR : EstadoPedido.FALTA_MERCADERIA)
+                        .conMontoTotal(montoTotal)
+                        .build());
 
         //Ahora creamos la lista de detallePedidoEntity
         List<DetallePedidoEntity> detalles = request.getDetalles()
@@ -136,28 +130,19 @@ public class PedidoService {
 
                     ProductoEntity producto = productoService.getEntityById(requestDetalle.getProductoId());
 
-                    // Se guarda el precio original sin descuento
-                    BigDecimal precioOriginal = producto.getPrecio();
-                    // Se guarda el precio con el descuento aplicado
-                    BigDecimal precioConDescuento = calculateUnitPriceProducto(producto);
+                    DetallePedidoBuilder detalle = new DetallePedidoBuilder()
+                            .deProducto(producto)
+                            .cantidad(requestDetalle.getCantidad())
+                            .precioOriginal(producto.getPrecio())
+                            .precioConDescuento(calculateUnitPriceProducto(producto))
+                            .delPedido(savedPedido);
 
-                    //Creamos los detallePedidoEntity y seteamos los atributos
-                    DetallePedidoEntity newDetalle = new DetallePedidoEntity();
-                    newDetalle.setCantidad(requestDetalle.getCantidad());
-                    newDetalle.setPrecioUnitario(precioOriginal);
-                    newDetalle.setPrecioDescuento(precioConDescuento);
-
+                    // Sin oferta vigente el Builder deja el descuento en 0
                     if (currentOferta(producto)){
-                        newDetalle.setDescuentoAplicado(producto.getOferta().getPorcentaje());
-                    }else {
-                        // Si no tiene una oferta asignada el producto el descuento se le setea a "0.0"
-                        newDetalle.setDescuentoAplicado(0.0);
+                        detalle.descuentoAplicado(producto.getOferta().getPorcentaje());
                     }
 
-                    newDetalle.setPedido(savedPedido);
-                    newDetalle.setProducto(producto);
-
-                    return newDetalle;
+                    return detalle.build();
                 })
                 .collect(Collectors.toCollection(ArrayList::new));
 
@@ -399,25 +384,6 @@ public class PedidoService {
 
         pedido.setUltimoRecordatorio(LocalDateTime.now());
         return mapper.toResponse(repository.save(pedido));
-    }
-
-    /// ----- Formateo -----
-
-    private String formatearPisoDepto(DireccionEntity direccion) {
-        if (direccion.getPiso() == null && direccion.getDepartamento() == null) {
-            return "Sin especificar";
-        }
-
-        if (direccion.getPiso() == null) {
-            return "Depto: " + direccion.getDepartamento();
-        }
-
-        if (direccion.getDepartamento() == null || direccion.getDepartamento().isBlank()) {
-            return "Piso: " + direccion.getPiso();
-        }
-
-        return "Piso: " + direccion.getPiso()
-                + " | Depto: " + direccion.getDepartamento();
     }
 
     /// ---- Funciones Utiles ----
