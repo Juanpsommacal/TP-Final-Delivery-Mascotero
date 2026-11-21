@@ -22,30 +22,33 @@ public class UsuarioService {
     private final RoleService roleService;
     private final PasswordEncoder passwordEncoded;
 
+    // Todo usuario nuevo es USER. Un admin (o el superadmin) lo puede pasar a ADMIN despues.
     public UsuarioResponseDTO createUsuario(UsuarioCreateRequestDTO dto){
         validateUsername(dto.getEmail());
-        RoleEntity roleEntity = roleService.findByRoleName(RoleType.ADMIN);
+        RoleEntity roleEntity = roleService.findByRoleName(RoleType.USER);
         UsuarioEntity usuario = usuarioMapper.toEntity(dto);
         usuario.setRole(roleEntity);
         usuario.setActive(true);
         usuario.setPassword(passwordEncoded.encode(dto.getPassword()));
         return usuarioMapper.toResponse(usuarioRepository.save(usuario));
     }
+
+    // USER -> ADMIN. Lo pueden hacer los admins y el superadmin
     public UsuarioResponseDTO elevatePrivilage(long idUsuario)
     {
-       UsuarioEntity user = usuarioRepository.findById(idUsuario).orElseThrow(()-> new ResourceNotFoundException("Usuario con id: " + idUsuario +" no existe"));
+        UsuarioEntity user = findById(idUsuario);
+        validarNoEsSuperadmin(user, "No se puede modificar el rol del superadmin");
         if(user.getRole().getRoleName().equals(RoleType.ADMIN)) throw  new InvalidResourceStateException("EL usuario ya posee el rol de admin");
         user.setRole(roleService.findByRoleName(RoleType.ADMIN));
         return usuarioMapper.toResponse(usuarioRepository.save(user));
     }
 
+    // ADMIN -> USER. Solo el superadmin (lo controla el @PreAuthorize del controller)
     public  UsuarioResponseDTO revokePrivilege(long idUsuario)
     {
-        UsuarioEntity user = usuarioRepository.findById(idUsuario).orElseThrow(()-> new ResourceNotFoundException("Usuario con id: " + idUsuario +" no existe"));
+        UsuarioEntity user = findById(idUsuario);
+        validarNoEsSuperadmin(user, "No se puede modificar el rol del superadmin");
         if(user.getRole().getRoleName().equals(RoleType.USER)) throw  new InvalidResourceStateException("EL usuario ya posee el rol mas bajo");
-       //EL user se inicializa en Admin , cambiar a user ni bien se crea el primer admin
-        RoleEntity role = roleService.findByRoleName(RoleType.ADMIN);
-        minimoDeAdmin(role.getId());
         user.setRole(roleService.findByRoleName(RoleType.USER));
         return usuarioMapper.toResponse(usuarioRepository.save(user));
     }
@@ -64,16 +67,21 @@ public class UsuarioService {
     }
     public UsuarioResponseDTO desactivateUser(Long idUsuario ){
         UsuarioEntity usuario = usuarioRepository.findById(idUsuario).orElseThrow(()-> new ResourceNotFoundException("Usuario con id: " + idUsuario +" no existe"));
+        validarNoEsSuperadmin(usuario, "No se puede dar de baja al superadmin");
         if(!usuario.isActive()) throw new InvalidResourceStateException("Acción redundante: El usuario seleccionado ya tiene la baja en el sistema.");
-        RoleEntity role = roleService.findByRoleName(usuario.getRole().getRoleName());
-        minimoDeAdmin(role.getId());
         usuario.setActive(false);
         return  usuarioMapper.toResponse(usuarioRepository.save(usuario));
     }
-    private void minimoDeAdmin(long idRole)
-    {
-        int cantidadRole = usuarioRepository.countByRole_id(idRole);
-        if(cantidadRole == 1) throw new InvalidRevokePrivilege("No se puede modificar al unico Admin disponible");
+    // El superadmin siempre existe y esta activo, asi que el sistema nunca se queda sin administrador
+    private void validarNoEsSuperadmin(UsuarioEntity usuario, String mensaje) {
+        if (usuario.getRole().getRoleName() == RoleType.SUPERADMIN) {
+            throw new InvalidRevokePrivilege(mensaje);
+        }
+    }
+
+    private UsuarioEntity findById(long idUsuario) {
+        return usuarioRepository.findById(idUsuario)
+                .orElseThrow(()-> new ResourceNotFoundException("Usuario con id: " + idUsuario +" no existe"));
     }
 
     private void validateUsername(String email){

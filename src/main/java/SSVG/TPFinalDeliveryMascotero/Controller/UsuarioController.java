@@ -35,8 +35,9 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponseDTO> elevatePrivilage(@PathVariable long id) {
         return ResponseEntity.ok().body(usuarioService.elevatePrivilage(id));
     }
+    // Quitar el rol de admin: solo el superadmin
     @PatchMapping("revoke/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPERADMIN')")
     public ResponseEntity<UsuarioResponseDTO> downgradePrivilege(@PathVariable long id) {
         return ResponseEntity.ok().body(usuarioService.revokePrivilege(id));
     }
